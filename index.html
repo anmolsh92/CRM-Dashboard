@@ -1,0 +1,2342 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pipeline &amp; Accounts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+
+<style>
+/* ===================================================================
+   Ledger tokens — section 5 of the design system, values exact.
+   Single theme by design: the beige ground is what makes blue read as
+   calm and orange/red as urgent, so there is no dark variant.
+   =================================================================== */
+:root{
+  --surface-100:#F3EEE3; --surface-200:#FAF7F0; --surface-300:#E9E2D2;
+  --line-100:#DCD3C0;    --line-200:#8A7E68;
+  --ink-100:#1C2330;     --ink-200:#4A4539;    --ink-300:#645D4E;
+  --blue-600:#1D5A94;    --blue-700:#164A7B;   --blue-100:#D3E2F1;
+  --orange-500:#C25B04;  --orange-700:#8F3E00; --orange-100:#F8DDC2;
+  --red-600:#A3211F;     --red-700:#7A1715;    --red-100:#F2CFCA;
+  --slate-500:#5F6B7C;   --slate-200:#C9CFD8;
+  --on-accent:#FFFFFF;   --focus-ring:#164A7B;
+
+  --font-display:"Source Serif 4",Georgia,serif;
+  --font-sans:"IBM Plex Sans",Arial,sans-serif;
+
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:24px; --space-6:32px; --space-7:48px; --space-8:64px;
+  --radius-sm:2px; --radius-md:4px; --radius-lg:8px;
+  --shadow-card:0 1px 0 rgba(28,35,48,.04), 0 1px 3px rgba(28,35,48,.07);
+  --shadow-raised:0 8px 24px rgba(28,35,48,.14);
+  --page-max:1200px; --sidebar-w:224px;
+
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+
+body{background:var(--surface-100);color:var(--ink-100);
+  font-family:var(--font-sans);font-size:15px;line-height:22px;
+  -webkit-font-smoothing:antialiased}
+
+/* type styles */
+.ld-display-xl{font-family:var(--font-display);font-size:56px;line-height:60px;font-weight:600;
+  font-variant-numeric:tabular-nums lining-nums}
+.ld-headline{font-family:var(--font-display);font-size:32px;line-height:38px;font-weight:600;
+  margin:0;text-wrap:balance}
+.ld-title{font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:600;margin:0}
+.ld-figure-xl{font-family:var(--font-display);font-size:48px;line-height:52px;font-weight:600;
+  font-variant-numeric:tabular-nums lining-nums}
+.ld-figure-md{font-family:var(--font-display);font-size:28px;line-height:32px;font-weight:600;
+  font-variant-numeric:tabular-nums lining-nums}
+.ld-body{font-size:15px;line-height:22px;font-weight:400}
+.ld-body-sm{font-size:13px;line-height:19px;font-weight:400}
+.ld-label{font-size:12px;line-height:16px;font-weight:500;text-transform:uppercase;
+  letter-spacing:.04em}
+.ld-caption{font-size:12px;line-height:16px;font-weight:400;color:var(--ink-300)}
+.ld-eyebrow{font-size:12px;line-height:16px;font-weight:500;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--ink-300);margin:0 0 var(--space-2)}
+
+/* shell */
+.ld-shell{display:grid;grid-template-columns:var(--sidebar-w) minmax(0,1fr);
+  min-height:100vh;max-width:calc(var(--page-max) + var(--sidebar-w));margin:0 auto}
+.ld-shell>aside{border-right:1px solid var(--line-100);background:var(--surface-100);
+  padding:var(--space-5) var(--space-4);position:sticky;
+  top:env(safe-area-inset-top,0px);align-self:start;height:100vh;overflow-y:auto}
+.ld-shell>main{padding:var(--space-5)
+  max(var(--space-5),env(safe-area-inset-right,0px))
+  var(--space-8) max(var(--space-5),env(safe-area-inset-left,0px));min-width:0}
+.ld-brand{font-family:var(--font-display);font-size:19px;font-weight:600;margin:0 0 var(--space-5)}
+.ld-nav{display:flex;flex-direction:column;gap:2px}
+.ld-nav a{font-size:14px;padding:var(--space-2) var(--space-3);border-radius:var(--radius-md);
+  color:var(--ink-200);text-decoration:none}
+.ld-nav a:hover{background:var(--surface-300)}
+.ld-nav a[aria-current="page"]{background:var(--blue-100);color:var(--blue-700);font-weight:600}
+.ld-navgroup{margin-top:var(--space-5)}
+
+@media (max-width:860px){
+  .ld-shell{grid-template-columns:minmax(0,1fr)}
+  .ld-shell>aside{position:static;height:auto;border-right:0;
+    border-bottom:1px solid var(--line-100)}
+  .ld-nav{flex-direction:row;flex-wrap:wrap}
+}
+
+/* highlight — the signature device */
+.ld-mark{border-radius:var(--radius-sm);padding:1px 5px;
+  font-family:inherit;font-weight:inherit;font-size:inherit}
+.ld-mark.blue{background:var(--blue-100);color:var(--blue-700)}
+.ld-mark.orange{background:var(--orange-100);color:var(--orange-700)}
+.ld-mark.red{background:var(--red-100);color:var(--red-700)}
+
+/* status chip — word + shape + colour */
+.ld-chip{display:inline-flex;align-items:center;gap:var(--space-1);
+  font-size:13px;line-height:19px;font-weight:500;
+  padding:1px var(--space-2);border-radius:var(--radius-sm);white-space:nowrap}
+.ld-chip .sh{width:9px;height:9px;flex:none}
+.ld-chip.ontrack{background:var(--blue-100);color:var(--blue-700)}
+.ld-chip.ontrack .sh{background:var(--blue-600);border-radius:50%}
+.ld-chip.watch{background:var(--orange-100);color:var(--orange-700)}
+.ld-chip.watch .sh{background:var(--orange-500);
+  clip-path:polygon(50% 0,100% 100%,0 100%)}
+.ld-chip.critical{background:var(--red-100);color:var(--red-700)}
+.ld-chip.critical .sh{background:var(--red-600);transform:rotate(45deg)}
+.ld-chip.neutral{background:var(--slate-200);color:var(--ink-200)}
+.ld-chip.neutral .sh{background:var(--slate-500);height:2px;align-self:center}
+
+/* cards */
+.ld-card{background:var(--surface-200);border:1px solid var(--line-100);
+  border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:var(--space-4)}
+.ld-section{margin-top:var(--space-6)}
+.ld-cardhead{display:flex;align-items:baseline;gap:var(--space-3);
+  flex-wrap:wrap;margin-bottom:var(--space-3)}
+
+/* KPI strip */
+.ld-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(176px,1fr));
+  background:var(--surface-200);border:1px solid var(--line-100);
+  border-radius:var(--radius-lg);box-shadow:var(--shadow-card);overflow:hidden}
+.ld-kpi{padding:var(--space-4);border-right:1px solid var(--line-100);min-width:0}
+.ld-kpi:last-child{border-right:0}
+.ld-kpi .lab{color:var(--ink-300);margin-bottom:var(--space-1)}
+.ld-kpi .fig{margin:var(--space-1) 0 var(--space-1);overflow-wrap:anywhere}
+.ld-kpi .dl{font-size:13px;line-height:19px;font-weight:500;
+  font-variant-numeric:tabular-nums}
+.ld-kpi .dl.ontrack{color:var(--blue-600)} .ld-kpi .dl.watch{color:var(--orange-700)}
+.ld-kpi .dl.critical{color:var(--red-600)} .ld-kpi .dl.neutral{color:var(--ink-200)}
+.ld-kpi .cap{margin-top:var(--space-1)}
+.ld-kpi .chipwrap{margin-top:var(--space-2)}
+@media (max-width:860px){.ld-kpi{border-right:0;border-bottom:1px solid var(--line-100)}}
+
+/* kanban */
+.ld-kan{display:grid;gap:var(--space-2);
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.ld-kancol{background:var(--surface-200);border:1px solid var(--line-100);
+  border-radius:var(--radius-lg);box-shadow:var(--shadow-card);
+  padding:var(--space-3);display:flex;flex-direction:column;gap:var(--space-2);min-width:0}
+.ld-kancol .st{color:var(--ink-300);min-height:32px}
+.ld-kancol .ct{font-family:var(--font-display);font-size:28px;line-height:32px;
+  font-weight:600;font-variant-numeric:tabular-nums lining-nums}
+.ld-kantrack{height:6px;background:var(--surface-300);border-radius:var(--radius-sm);
+  overflow:hidden}
+.ld-kanfill{height:100%;border-radius:var(--radius-sm);background:var(--slate-500);
+  transition:width 200ms ease}
+.ld-kanfill.ontrack{background:var(--blue-600)}
+.ld-kanfill.watch{background:var(--orange-500)}
+.ld-kanfill.critical{background:var(--red-600)}
+.ld-kancol .amt{font-variant-numeric:tabular-nums}
+
+/* variance bars */
+.ld-vbar{display:grid;gap:var(--space-1);margin-bottom:var(--space-3)}
+.ld-vbar:last-child{margin-bottom:0}
+.ld-vbar .top{display:flex;justify-content:space-between;gap:var(--space-3);align-items:baseline}
+.ld-vbar .nm{font-size:13px;line-height:19px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;min-width:0}
+.ld-vbar .vv{font-size:13px;line-height:19px;font-weight:500;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.ld-track{position:relative;height:14px;background:var(--surface-300);
+  border-radius:var(--radius-sm);overflow:visible}
+.ld-fill{height:100%;border-radius:var(--radius-sm);background:var(--slate-500);
+  transition:width 200ms ease}
+.ld-fill.ontrack{background:var(--blue-600)} .ld-fill.watch{background:var(--orange-500)}
+.ld-fill.critical{background:var(--red-600)} .ld-fill.neutral{background:var(--slate-500)}
+.ld-tick{position:absolute;top:-3px;bottom:-3px;width:0;
+  border-left:1px dashed var(--ink-100)}
+
+/* filters */
+.ld-filterbar{background:var(--surface-300);border:1px solid var(--line-100);
+  border-radius:var(--radius-lg);padding:var(--space-3);display:grid;gap:var(--space-3)}
+.ld-frow{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
+.ld-fgroup{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap;min-width:0}
+.ld-fgroup>.ld-label{color:var(--ink-300);flex:none}
+.ld-fchip{font-size:13px;line-height:19px;padding:2px var(--space-2);
+  border-radius:var(--radius-sm);border:1px solid var(--line-200);
+  background:var(--surface-200);color:var(--ink-200);cursor:pointer;white-space:nowrap}
+.ld-fchip:hover{background:var(--surface-100)}
+.ld-fchip[aria-pressed="true"]{background:var(--blue-600);border-color:var(--blue-600);
+  color:var(--on-accent);font-weight:500}
+.ld-shown{color:var(--ink-200);font-weight:500;font-size:13px}
+
+/* controls */
+button,select,input{font:inherit;color:inherit}
+.ld-btn{font-family:var(--font-sans);font-size:13px;line-height:19px;font-weight:500;
+  padding:var(--space-2) var(--space-3);border-radius:var(--radius-md);
+  border:1px solid var(--line-200);background:var(--surface-200);color:var(--ink-100);
+  cursor:pointer;white-space:nowrap}
+.ld-btn:hover:not(:disabled){background:var(--surface-300)}
+.ld-btn:disabled{background:var(--slate-200);color:var(--ink-300);cursor:not-allowed;
+  border-color:var(--slate-200)}
+.ld-btn.primary{background:var(--blue-600);border-color:var(--blue-600);color:var(--on-accent)}
+.ld-btn.primary:hover:not(:disabled){background:var(--blue-700)}
+.ld-btn.quiet{border-color:transparent;background:transparent;color:var(--blue-700)}
+.ld-btn.quiet:hover{background:var(--surface-300)}
+.ld-btn.sm{font-size:12px;padding:var(--space-1) var(--space-2)}
+select,input[type=text],input[type=email],input[type=password],input[type=date],
+input[type=number],textarea{width:100%;padding:var(--space-2);border-radius:var(--radius-md);
+  border:1px solid var(--line-200);background:var(--surface-200);min-width:0;
+  font-family:var(--font-sans);font-size:14px}
+textarea{resize:vertical;min-height:64px;line-height:20px}
+label.ld-fld{display:block;min-width:0}
+label.ld-fld>span{display:block;font-size:12px;line-height:16px;font-weight:500;
+  text-transform:uppercase;letter-spacing:.04em;color:var(--ink-300);margin-bottom:var(--space-1)}
+label.ld-fld.req>span::after{content:" (required)";text-transform:none;letter-spacing:0;
+  color:var(--ink-300);font-weight:400}
+:is(button,select,input,textarea,a,[tabindex]):focus-visible{
+  outline:2px solid var(--focus-ring);outline-offset:2px}
+
+/* table */
+.ld-tablewrap{overflow-x:auto;border:1px solid var(--line-100);
+  border-radius:var(--radius-lg);background:var(--surface-200)}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:19px}
+thead th{font-size:12px;line-height:16px;font-weight:500;text-transform:uppercase;
+  letter-spacing:.04em;color:var(--ink-200);background:var(--surface-300);
+  text-align:left;padding:var(--space-2) var(--space-3);
+  border-bottom:1px solid var(--line-200);white-space:nowrap;position:sticky;top:0;z-index:1}
+tbody td{padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--line-100);
+  white-space:nowrap;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums lining-nums}
+tbody tr:hover td{background:var(--surface-300)}
+tbody tr.row-watch td{background:var(--orange-100)}
+tbody tr.row-critical td{background:var(--red-100)}
+tbody tr.row-watch:hover td,tbody tr.row-critical:hover td{filter:brightness(.97)}
+
+/* misc */
+.ld-note{background:var(--surface-200);border:1px solid var(--line-100);
+  border-radius:var(--radius-lg);padding:var(--space-4);margin-top:var(--space-4)}
+.ld-note .ld-title{font-size:18px;line-height:24px;margin-bottom:var(--space-2)}
+.ld-empty{padding:var(--space-6);text-align:center;color:var(--ink-200)}
+
+/* Defined term + tooltip. A metric label carries a dotted rule, the way a
+   defined term is marked in a printed report. The definition opens on hover,
+   on keyboard focus and on tap, so it is never hover-only (rule 8); the figure,
+   delta and comparison stay on the tile whether or not it is ever opened. */
+.ld-def{font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;
+  background:none;border:0;border-bottom:1px dotted var(--line-200);
+  padding:0 0 1px;cursor:help;text-align:left}
+.ld-def:hover{border-bottom-color:var(--ink-200);color:var(--ink-200)}
+.ld-tip{position:fixed;z-index:60;max-width:330px;background:var(--surface-200);
+  border:1px solid var(--line-200);border-radius:var(--radius-md);
+  box-shadow:var(--shadow-raised);padding:var(--space-3);
+  font-family:var(--font-sans);font-size:13px;line-height:19px;font-weight:400;
+  text-transform:none;letter-spacing:normal;color:var(--ink-100);
+  opacity:0;visibility:hidden;transition:opacity 150ms ease;pointer-events:none}
+.ld-tip[data-open="true"]{opacity:1;visibility:visible}
+.ld-tip b{font-weight:600}
+.ld-two{display:grid;gap:var(--space-4);grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+@media (max-width:860px){.ld-two{grid-template-columns:minmax(0,1fr)}}
+.ld-selrow{display:grid;gap:var(--space-3);
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:var(--space-4)}
+.ld-modcards{display:grid;gap:var(--space-4);
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:var(--space-5)}
+.ld-modcard{text-align:left;width:100%;cursor:pointer;background:var(--surface-200);
+  border:1px solid var(--line-100);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);padding:var(--space-5);font-family:var(--font-sans)}
+.ld-modcard:hover{background:var(--surface-300)}
+/* The pre-sign-in cards describe the modules but cannot be opened yet, so they
+   take no hover shift: hover must never imply an action that is not there. */
+.ld-modcard.static{cursor:default}
+.ld-modcard.static:hover{background:var(--surface-200)}
+/* Module name at headline size in the display face, in blue-700 on both the
+   pre-sign-in and signed-in cards. On the signed-in cards that is the
+   documented link colour. On the pre-sign-in cards it is the same name for the
+   same thing, kept consistent at the owner's request; those cards carry no
+   hover shift or underline, so colour is never the only affordance cue. */
+.ld-modname{font-family:var(--font-display);font-size:32px;line-height:38px;
+  font-weight:600;color:var(--blue-700);margin:0;text-wrap:balance}
+/* Icon in the module's link colour. Stroke only, so it reads on both the
+   resting and hover surfaces. The name beside it carries the meaning; the
+   icon is a visual anchor, so it is hidden from assistive technology. */
+.ld-modicon{display:block;width:44px;height:44px;margin:0 0 var(--space-3);
+  fill:none;stroke:var(--blue-700);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ld-modcard:hover .ld-modname{text-decoration:underline;text-underline-offset:3px}
+.ld-modcard.static:hover .ld-modname{text-decoration:none}
+.ld-modtag{font-family:var(--font-display);font-size:22px;line-height:28px;
+  font-weight:600;color:var(--ink-100);margin:var(--space-2) 0 0;text-wrap:balance}
+@media (max-width:560px){
+  .ld-modname{font-size:26px;line-height:32px}
+  .ld-modtag{font-size:19px;line-height:25px}
+}
+
+/* Cover block — pattern 10: one solid block, the title, and nothing else.
+   ink-100 rather than blue-600, so no signal colour is spent on decoration. */
+.ld-cover{background:var(--ink-100);border-radius:var(--radius-lg);
+  padding:var(--space-7) var(--space-5);margin-bottom:var(--space-6)}
+.ld-covertag{font-family:var(--font-display);font-size:56px;line-height:60px;
+  font-weight:600;color:var(--on-accent);margin:0 auto;max-width:30ch;
+  text-wrap:balance;text-align:center}
+/* display-xl is 56px by the token table; it has to step down on a phone or the
+   page scrolls sideways. The scale below it is the same ratio, not new tokens. */
+@media (max-width:900px){.ld-covertag{font-size:40px;line-height:46px}}
+@media (max-width:560px){
+  .ld-cover{padding:var(--space-5) var(--space-4)}
+  .ld-covertag{font-size:28px;line-height:34px}
+}
+.ld-auth{max-width:420px;margin:var(--space-6) auto 0}
+.ld-frm{display:grid;gap:var(--space-3)}
+.ld-scrim{position:fixed;inset:0;background:rgba(28,35,48,.5);z-index:50;
+  display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:var(--space-5) var(--space-3)}
+.ld-modal{background:var(--surface-200);border:1px solid var(--line-100);
+  border-radius:var(--radius-lg);width:100%;max-width:800px;margin:auto;
+  box-shadow:var(--shadow-raised)}
+.ld-mhead{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-5);
+  border-bottom:1px solid var(--line-100);position:sticky;top:0;background:var(--surface-200);
+  border-radius:var(--radius-lg) var(--radius-lg) 0 0;z-index:2}
+.ld-mbody{padding:var(--space-5)}
+.ld-mfoot{display:flex;gap:var(--space-2);justify-content:flex-end;flex-wrap:wrap;
+  padding:var(--space-4) var(--space-5);border-top:1px solid var(--line-100)}
+.ld-fieldgrid{display:grid;gap:var(--space-3);
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:var(--space-5)}
+.ld-fieldgrid.full{grid-template-columns:1fr}
+.ld-grouphead{font-size:12px;line-height:16px;font-weight:500;text-transform:uppercase;
+  letter-spacing:.04em;color:var(--ink-300);margin:0 0 var(--space-2);
+  padding-bottom:var(--space-1);border-bottom:1px solid var(--line-200)}
+.ld-drop{border:1px dashed var(--line-200);border-radius:var(--radius-md);
+  padding:var(--space-6);text-align:center;cursor:pointer;background:var(--surface-100)}
+.ld-drop:hover{background:var(--surface-300)}
+.grow{flex:1 1 auto}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div class="ld-shell">
+  <aside>
+    <nav class="ld-nav" id="nav" hidden>
+      <a href="#home" data-r="home">Overview</a>
+      <a href="#pipeline" data-r="pipeline">Sales pipeline</a>
+      <a href="#accounts" data-r="accounts">Account management</a>
+      <a href="#users" data-r="users" id="navUsers" hidden>Users</a>
+    </nav>
+    <div class="ld-navgroup" id="sideWho" hidden>
+      <p class="ld-eyebrow" style="margin-bottom:var(--space-1)">Signed in</p>
+      <p class="ld-body-sm" id="sideEmail" style="margin:0 0 var(--space-1);overflow-wrap:anywhere"></p>
+      <p style="margin:0 0 var(--space-3)"><span class="ld-chip neutral" id="sideRole">
+        <span class="sh"></span>user</span></p>
+      <button class="ld-btn sm" type="button" id="outBtn">Sign out</button>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div id="boot"><p class="ld-eyebrow">Loading</p>
+      <h1 class="ld-headline">Connecting to the workspace</h1></div>
+
+    <div id="err" class="ld-note" hidden>
+      <p class="ld-title" id="errT"></p><p class="ld-body" id="errB" style="margin:0"></p></div>
+
+    <!-- shown only when someone arrives from an invite email -->
+    <div id="setPass" class="ld-card" hidden style="margin-bottom:var(--space-5)">
+      <p class="ld-eyebrow">Finish setting up</p>
+      <h2 class="ld-title" style="margin:0 0 var(--space-2)">Choose a password</h2>
+      <p class="ld-body" style="color:var(--ink-200)">
+        You are signed in from the invite link. Set a password now so you can sign
+        in again without it.</p>
+      <form class="ld-frm" id="passForm">
+        <label class="ld-fld req"><span>New password</span>
+          <input type="password" id="newPass" autocomplete="new-password"
+            minlength="6" required></label>
+        <button class="ld-btn primary" type="submit" id="passGo">Save password</button>
+      </form>
+      <p class="ld-body-sm" id="passMsg" style="margin:var(--space-3) 0 0;color:var(--ink-200)"></p>
+    </div>
+
+    <!-- AUTH -->
+    <section id="vAuth" hidden>
+      <div class="ld-cover">
+        <p class="ld-covertag">Keep track of the financial metrics that matter
+          for your company&rsquo;s survival and growth.</p>
+      </div>
+      <div class="ld-modcards">
+        <div class="ld-modcard static">
+          <p class="ld-modname">Sales pipeline</p>
+          <p class="ld-modtag">Get visibility on your leads and what&rsquo;s required to convert them</p>
+          <p class="ld-body" style="color:var(--ink-200);margin:var(--space-3) 0 0">
+            Every lead from first contact to contract signed, with the value
+            sitting at each stage.</p>
+          <p class="ld-caption" style="margin:var(--space-3) 0 0">Figures appear once you sign in.</p>
+        </div>
+        <div class="ld-modcard static">
+          <p class="ld-modname">Account management</p>
+          <p class="ld-modtag">Track revenue operations across different accounts</p>
+          <p class="ld-body" style="color:var(--ink-200);margin:var(--space-3) 0 0">
+            Customers won, what each pays per month, and which renewals fall
+            due next.</p>
+          <p class="ld-caption" style="margin:var(--space-3) 0 0">Figures appear once you sign in.</p>
+        </div>
+      </div>
+      <div class="ld-auth">
+      <div class="ld-card">
+        <p class="ld-eyebrow">Access</p>
+        <div class="ld-frow" style="gap:var(--space-2);margin-bottom:var(--space-3)">
+          <button class="ld-btn" type="button" id="modeIn">Sign in</button>
+          <button class="ld-btn" type="button" id="modeReq">Request an invite</button>
+        </div>
+        <h1 class="ld-headline" id="authTitle" style="font-size:26px;line-height:32px">Sign in</h1>
+        <p class="ld-body" id="authLead" style="color:var(--ink-200)">
+          Use the email and password for your approved account.</p>
+        <form class="ld-frm" id="authForm">
+          <label class="ld-fld req" id="nameWrap" hidden><span>Full name</span>
+            <input type="text" id="aName" autocomplete="name"></label>
+          <label class="ld-fld req"><span>Email</span>
+            <input type="email" id="aEmail" autocomplete="username" required></label>
+          <label class="ld-fld" id="noteWrap" hidden><span>Why you need access (optional)</span>
+            <textarea id="aNote" rows="3"></textarea></label>
+          <label class="ld-fld req" id="passWrap"><span>Password</span>
+            <input type="password" id="aPass" autocomplete="current-password" minlength="6"></label>
+          <button class="ld-btn primary" type="submit" id="aGo">Sign in</button>
+        </form>
+        <p class="ld-body-sm" id="authMsg" style="margin:var(--space-3) 0 0;color:var(--ink-200)"></p>
+        <p style="margin:var(--space-3) 0 0">
+          <button class="ld-btn quiet" type="button" id="authSwap">I have been approved — create my account</button></p>
+        <p class="ld-caption" id="firstRun" style="margin:var(--space-4) 0 0;
+          padding-top:var(--space-3);border-top:1px solid var(--line-100)">
+          Checking whether anyone has signed up yet.</p>
+      </div>
+      </div>
+    </section>
+
+    <!-- HOME -->
+    <section id="vHome" hidden>
+      <div class="ld-cover">
+        <p class="ld-covertag">Keep track of the financial metrics that matter
+          for your company&rsquo;s survival and growth.</p>
+      </div>
+      <div class="ld-modcards">
+        <button class="ld-modcard" type="button" data-go="pipeline">
+          <svg class="ld-modicon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M3 4h18l-7 8.5V19l-4 2v-8.5L3 4z"/></svg>
+          <p class="ld-modname">Sales pipeline</p>
+        </button>
+        <button class="ld-modcard" type="button" data-go="accounts">
+          <svg class="ld-modicon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16"/>
+            <path d="M14 9h5a1 1 0 0 1 1 1v11"/><path d="M3 21h18"/>
+            <path d="M8 8h2M8 12h2M8 16h2"/></svg>
+          <p class="ld-modname">Account management</p>
+        </button>
+      </div>
+      <div id="claimBox"></div>
+    </section>
+
+    <!-- MODULE -->
+    <section id="vMod" hidden>
+      <div style="display:flex;align-items:flex-start;gap:var(--space-4);flex-wrap:wrap">
+        <div style="min-width:0;flex:1 1 320px">
+          <p class="ld-eyebrow" id="modEyebrow"></p>
+          <h1 class="ld-headline" id="modHeadline"></h1>
+        </div>
+        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;padding-top:var(--space-4)">
+          <button class="ld-btn" type="button" id="addBtn">Add entry</button>
+          <button class="ld-btn" type="button" id="upBtn">Upload file</button>
+        </div>
+      </div>
+
+      <div class="ld-filterbar ld-section" id="filterBar"></div>
+      <div class="ld-strip ld-section" id="strip"></div>
+
+      <div class="ld-section">
+        <div class="ld-cardhead">
+          <p class="ld-title" id="kanTitle">Deals by stage</p>
+          <p class="ld-caption grow" id="kanCap"></p>
+        </div>
+        <div class="ld-kan" id="kanban"></div>
+      </div>
+
+      <div class="ld-two ld-section">
+        <div class="ld-card">
+          <div class="ld-selrow">
+            <label class="ld-fld"><span id="selScopeLabel">Stage</span>
+              <select id="selScope"></select></label>
+            <label class="ld-fld"><span>Group by</span><select id="selGroup"></select></label>
+            <label class="ld-fld"><span>Measure</span><select id="selMetric"></select></label>
+            <label class="ld-fld"><span>Aggregate</span><select id="selAgg">
+              <option value="sum">Sum</option><option value="avg">Average</option>
+              <option value="count">Count of records</option>
+              <option value="max">Maximum</option><option value="min">Minimum</option>
+            </select></label>
+          </div>
+          <p class="ld-title" id="chTitle" style="font-size:18px;line-height:24px"></p>
+          <p class="ld-caption" id="chCap" style="margin:var(--space-1) 0 var(--space-4)"></p>
+          <div id="bars"></div>
+        </div>
+        <div class="ld-card">
+          <p class="ld-title" id="varTitle" style="font-size:18px;line-height:24px">Where to look first</p>
+          <p class="ld-caption" id="varCap" style="margin:var(--space-1) 0 var(--space-4)"></p>
+          <div id="variance"></div>
+        </div>
+      </div>
+
+      <div class="ld-section">
+        <div class="ld-cardhead">
+          <p class="ld-title" id="tblTitle">Records</p>
+          <p class="ld-caption grow" id="tblCap"></p>
+        </div>
+        <div class="ld-tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section id="vUsers" hidden>
+      <p class="ld-eyebrow">Administration</p>
+      <h1 class="ld-headline" id="usersHeadline">Users and roles</h1>
+
+      <div class="ld-section">
+        <div class="ld-cardhead">
+          <p class="ld-title" id="reqTitle" style="font-size:18px;line-height:24px">Invite requests</p>
+          <p class="ld-caption grow" id="reqCap"></p>
+          <select id="reqFilter" style="width:auto">
+            <option value="Pending">Waiting for a decision</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+            <option value="All">All</option>
+          </select>
+        </div>
+        <div class="ld-tablewrap"><table id="rTbl"><thead></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="ld-section">
+        <p class="ld-title" style="font-size:18px;line-height:24px">Accounts</p>
+        <div class="ld-tablewrap" style="margin-top:var(--space-2)">
+          <table id="uTbl"><thead></thead><tbody></tbody></table></div>
+      </div>
+      <div class="ld-note">
+        <p class="ld-title">How access works</p>
+        <p class="ld-body" style="margin:0 0 var(--space-2)">Anyone who signs up joins as a user.
+          The bootstrap address becomes an admin on first sign-up.</p>
+        <p class="ld-body" style="margin:0 0 var(--space-2)">Nobody gets in by signing up. A new
+          account is created inactive and sees nothing until an administrator approves its invite
+          request, choosing user or admin at that moment. The bootstrap address is the one
+          exception, so the workspace can be set up in the first place.</p>
+        <p class="ld-body" style="margin:0 0 var(--space-2)">Users read every record but may change
+          only those where they are the seller POC. Admins change anything. No one can alter their
+          own role or block their own account, so the last admin cannot be locked out.</p>
+        <p class="ld-body" style="margin:0">Blocking works in two layers. Supabase Auth refuses to
+          issue a token for a blocked address, so sign-in fails outright; and every row-level
+          security policy additionally requires an unblocked account, which closes the gap where a
+          token issued moments earlier would still be valid. A user blocked while signed in is
+          signed out on their next page load. The bootstrap admin address cannot be blocked.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="modalHost"></div>
+
+<script>
+/* =================== configuration =================== */
+var SUPABASE_URL = "https://yowvtdbqacltmilxkfsq.supabase.co";
+var SUPABASE_KEY = "sb_publishable_pD2ZF-OmCU5Ft1XPaslOOg_jnogHTWX";
+var SUPABASE_FN  = SUPABASE_URL + "/functions/v1/";
+/* Read the arrival hash before supabase-js consumes it: an invite link comes
+   back as #access_token=…&type=invite, and that is the only way to know the
+   person has just set foot here from an invite email and has no password yet. */
+var ARRIVED_AS = (function(){
+  var m = /[#&]type=([a-z_]+)/.exec(location.hash || '');
+  return m ? m[1] : '';
+})();
+var sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+var $ = function(id){ return document.getElementById(id); };
+function el(t,c,txt){ var e=document.createElement(t); if(c) e.className=c;
+  if(txt!=null) e.textContent=txt; return e; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(m){
+  return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; }); }
+
+/* =================== Ledger helpers =================== */
+var SHAPE_WORD = { ontrack:'On track', watch:'Needs attention',
+                   critical:'Critical', neutral:'No target' };
+
+function mark(text, tone){ return '<span class="ld-mark '+tone+'">'+esc(text)+'</span>'; }
+
+function chip(status, label){
+  var c = el('span','ld-chip '+status);
+  c.append(el('span','sh'));
+  c.append(document.createTextNode(label || SHAPE_WORD[status]));
+  return c;
+}
+
+/* Ledger rule 2: at most one red per screen. Candidates declare severity;
+   only the worst keeps critical, the rest fall back to watch. */
+function oneRed(candidates){
+  var crit = candidates.filter(function(c){ return c.status === 'critical'; });
+  if (crit.length <= 1) return candidates;
+  crit.sort(function(a,b){ return (b.severity||0) - (a.severity||0); });
+  crit.slice(1).forEach(function(c){ c.status = 'watch'; });
+  return candidates;
+}
+
+/* Indian numbering: this book is priced in INR, so it reads in lakh and crore. */
+function money(v){
+  if (v == null || v === '') return '—';
+  var n = Number(v); if (!isFinite(n)) return '—';
+  var a = Math.abs(n), s = n < 0 ? '−' : '';
+  if (a >= 1e7) return s+'₹'+(a/1e7).toFixed(2)+' Cr';
+  if (a >= 1e5) return s+'₹'+(a/1e5).toFixed(2)+' L';
+  return s+'₹'+Math.round(a).toLocaleString('en-IN');
+}
+function num(v){ if (v==null||v==='') return '—';
+  var n=Number(v); return isFinite(n)?n.toLocaleString('en-IN',{maximumFractionDigits:1}):'—'; }
+function pct(v){ if (v==null) return '—';
+  var n=Number(v); return (n<0?'−':'')+Math.abs(n).toFixed(1)+'%'; }
+function fmtTs(v){
+  if (!v) return '';
+  var d = new Date(v);
+  if (isNaN(d)) return String(v);
+  return d.toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',
+    hour:'2-digit',minute:'2-digit'});
+}
+function share(part, whole){
+  if (!whole || whole==0 || part==null) return null;
+  return (Number(part)/Number(whole))*100;
+}
+function longDate(d){
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+}
+
+/* ---- defined terms ---- */
+var TIP = null;
+function tipEl(){
+  if (!TIP){ TIP = el('div','ld-tip'); TIP.id = 'ld-tip';
+    TIP.setAttribute('role','tooltip'); document.body.append(TIP); }
+  return TIP;
+}
+function hideTip(){ if (TIP) TIP.setAttribute('data-open','false'); }
+function showTip(target, text){
+  var t = tipEl();
+  t.textContent = text;
+  t.setAttribute('data-open','true');
+  t.style.left = '0px'; t.style.top = '0px';
+  var r = target.getBoundingClientRect(), tr = t.getBoundingClientRect();
+  var left = Math.min(Math.max(8, r.left), window.innerWidth - tr.width - 8);
+  var top = r.bottom + 8;
+  if (top + tr.height > window.innerHeight - 8)
+    top = Math.max(8, r.top - tr.height - 8);
+  t.style.left = left + 'px'; t.style.top = top + 'px';
+}
+function defineTerm(label, text){
+  var b = el('button','ld-def', label);
+  b.type = 'button';
+  b.setAttribute('aria-describedby','ld-tip');
+  b.addEventListener('mouseenter', function(){ showTip(b, text); });
+  b.addEventListener('mouseleave', hideTip);
+  b.addEventListener('focus',      function(){ showTip(b, text); });
+  b.addEventListener('blur',       hideTip);
+  b.addEventListener('click', function(e){
+    e.preventDefault();
+    if (TIP && TIP.getAttribute('data-open') === 'true') hideTip();
+    else showTip(b, text);
+  });
+  return b;
+}
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') hideTip(); });
+window.addEventListener('scroll', hideTip, true);
+window.addEventListener('resize', hideTip);
+
+function kpi(o){
+  var c = el('div','ld-kpi');
+  var lab = el('p','lab ld-label');
+  if (o.explain) lab.append(defineTerm(o.label, o.explain));
+  else lab.textContent = o.label;
+  c.append(lab);
+  var f = el('p','fig ld-figure-md', o.value); c.append(f);
+  if (o.delta){
+    var d = el('p','dl '+(o.status||'neutral'));
+    d.textContent = (o.deltaDir==='down' ? '▼ ' : o.deltaDir==='up' ? '▲ ' : '') + o.delta;
+    c.append(d);
+  }
+  if (o.caption) c.append(el('p','cap ld-caption', o.caption));
+  if (o.chip !== false){
+    var w = el('div','chipwrap'); w.append(chip(o.status||'neutral', o.chipLabel)); c.append(w);
+  }
+  return c;
+}
+
+/* Horizontal variance bar on a shared track, with a dashed reference tick.
+   The value is always printed: the bar never carries the number alone. */
+function vbar(o){
+  var w = el('div','ld-vbar');
+  var top = el('div','top');
+  var nm = el('div','nm', o.label); nm.title = o.label;
+  top.append(nm, el('div','vv', o.valueLabel));
+  w.append(top);
+  var tr = el('div','ld-track');
+  var fl = el('div','ld-fill '+(o.status||'neutral'));
+  fl.style.width = Math.max(0.6, Math.min(100, (o.actual/(o.max||1))*100))+'%';
+  tr.append(fl);
+  if (o.target != null && o.max){
+    var tk = el('div','ld-tick');
+    tk.style.left = Math.min(100,(o.target/o.max)*100)+'%';
+    tr.append(tk);
+  }
+  w.append(tr);
+  if (o.caption) w.append(el('p','ld-caption', o.caption));
+  return w;
+}
+
+/* =================== state =================== */
+var S = { session:null, profile:null, route:'home', mod:null, lists:{},
+          dims:{pipeline:null, accounts:null},
+          filters:{pipeline:{}, accounts:{}},
+          sel:{pipeline:{}, accounts:{}},
+          totals:{pipeline:null, accounts:null},
+          perm:null,     // what the backend says this account may do
+          unowned:0 };   // unclaimed records, counted by the backend at sign-in
+
+try {
+  var saved = sessionStorage.getItem('ledger-filters');
+  if (saved) S.filters = JSON.parse(saved);
+} catch(e){}
+function persistFilters(){
+  try { sessionStorage.setItem('ledger-filters', JSON.stringify(S.filters)); } catch(e){}
+}
+
+/* =================== module definitions =================== */
+var MODULES = {
+  pipeline: {
+    title:'Sales pipeline', table:'leads', pk:'sr_no',
+    fnSummary:'pipeline_summary', fnBreak:'pipeline_breakdown',
+    fnRows:'pipeline_rows', fnKanban:'pipeline_kanban',
+    kanTitle:'Deals by stage',
+    // Lead stage appears both as chips here and as the scope dropdown in the
+    // chart row, matching the account module. syncScope keeps the two in step.
+    scopeFilter:[ 'current_stage', 'Lead stage', 'lead_stage' ],
+    enumFilters:[ ['current_stage','Lead stage','lead_stage'],
+                  ['overall_status','Engagement','lead_overall_status'],
+                  ['lead_source','Source','lead_source'],
+                  ['solution_offered','Solution','solution_type'],
+                  ['industry','Industry','industry'] ],
+    dimFilters:[ ['sales_poc_name','Seller POC'], ['region','Region'] ],
+    dateFields:[['first_contact_date','First contact'],['last_contact_date','Last contact'],
+                ['next_action_date','Next action'],['expected_close_date','Expected close']],
+    // Stage is deliberately absent: the Kanban above already breaks the pipeline
+    // down by stage, so grouping the chart by it would repeat the same figures.
+    // Lead stage is a filter instead, which slices every panel at once.
+    groupBy:[['lead_source','Source'],['industry','Industry'],
+             ['solution_offered','Solution'],['overall_status','Engagement'],
+             ['sales_poc_name','Seller POC'],['region','Region'],['city','City'],
+             ['campaign','Campaign'],['first_contact_month','Month of first contact']],
+    metrics:[['deal_value','Deal value','money'],['weighted_value','Weighted value','money'],
+             ['days_since_contact','Days since contact','num'],
+             ['days_in_pipeline','Days in pipeline','num']],
+    columns:[ ['company_name','Company'], ['current_stage','Stage','stage'],
+              ['overall_status','Engagement','overall'], ['industry','Industry'],
+              ['solution_offered','Solution'], ['lead_source','Source'],
+              ['deal_value','Deal value (INR)','money'], ['weighted_value','Weighted (INR)','money'],
+              ['sales_poc_name','Seller POC'], ['primary_contact_name','Client contact'],
+              ['last_contact_date','Last contact'], ['days_since_contact','Days','num'],
+              ['next_action_date','Next action'], ['region','Region'] ],
+    form:[
+      ['The company',[ ['company_name','Company name','text',true],
+        ['industry','Industry','enum:industry'],
+        ['solution_offered','Solution offered','enum:solution_type'],
+        ['solution_other','Others (specify)','text'],
+        ['region','Region','dim:region'], ['city','City','text'] ]],
+      ['Where it came from',[ ['lead_source','Lead source','enum:lead_source'],
+        ['campaign','Campaign','dim:campaign'] ]],
+      ['Status',[ ['current_stage','Lead stage','enum:lead_stage'],
+        ['overall_status','Engagement status','enum:lead_overall_status'] ]],
+      ['Client contact',[ ['primary_contact_name','Contact name','text'],
+        ['primary_contact_email','Contact email','email'],
+        ['primary_contact_phone','Contact phone','text'] ]],
+      ['Seller side',[ ['sales_poc_name','POC name','dim:sales_poc_name'],
+        ['sales_poc_email','POC email','email'] ]],
+      ['Dates',[ ['first_contact_date','Date of first contact','date'],
+        ['last_contact_date','Last contact date','date'],
+        ['next_action_date','Next action date','date'],
+        ['expected_close_date','Expected close date','date'] ]],
+      ['Commercials',[ ['deal_value','Deal value (INR)','number'] ]],
+      ['Notes',[ ['opportunity_headline','Opportunity headline','text'],
+        ['opportunity_details','Opportunity details','textarea'],
+        ['sales_poc_feedback','POC feedback','textarea'],
+        ['remarks','Remarks','textarea'] ]] ],
+    // Shown in the form but never editable: the database writes these.
+    systemFields:[
+      ['sr_no','Record number','ts:no'],
+      ['owner','Created by','ts:owner'],
+      ['data_source','Entered via','ts:plain'],
+      ['import_batch_id','Import batch','ts:plain'],
+      ['created_at','Created','ts:time'],
+      ['updated_at','Last changed','ts:time'] ]
+  },
+  accounts: {
+    title:'Account management', table:'accounts', pk:'id',
+    fnSummary:'accounts_summary', fnBreak:'accounts_breakdown',
+    fnRows:'accounts_rows', fnKanban:'accounts_kanban',
+    kanTitle:'Accounts by status',
+    scopeFilter:[ 'account_status', 'Status', 'account_status' ],
+    // Account status appears both as chips here and as the scope dropdown in the
+    // chart row. The two are kept in step; see syncScope.
+    enumFilters:[ ['account_status','Account status','account_status'],
+                  ['solution_offered','Solution','solution_type'],
+                  ['industry','Industry','industry'],
+                  ['billing_frequency','Billing','billing_frequency'] ],
+    dimFilters:[ ['sales_poc_name','Seller POC'], ['region','Region'] ],
+    dateFields:[['contract_start','Deal start date']],
+    // Account status is absent here for the same reason stage is in the pipeline
+    // module: the Kanban above already breaks the book down by status.
+    groupBy:[['industry','Industry'],
+             ['solution_offered','Solution'],['sales_poc_name','Seller POC'],
+             ['region','Region'],['city','City'],['billing_frequency','Billing frequency'],
+             ['renewal_window','Renewal window'],['deal_start_month','Month deal started']],
+    metrics:[['annualised_value','Annual value','money'],
+             ['monthly_deal_value','Monthly deal size','money'],
+             ['active_value','Active value','money'],['seats','Seats','num'],
+             ['open_tickets','Open tickets','num'],['nps','NPS','num'],
+             ['days_to_renewal','Days to renewal','num']],
+    columns:[ ['account_name','Company'], ['account_status','Status','astatus'],
+              ['industry','Industry'],
+              ['solution_offered','Solution'],
+              ['monthly_deal_value','Monthly size (INR)','money'],
+              ['annualised_value','Annual value (INR)','money'],
+              ['sales_poc_name','Seller POC'], ['primary_contact_name','Client contact'],
+              ['contract_start','Deal start'], ['renewal_window','Renewal','renew'],
+              ['days_to_renewal','Days','num'], ['nps','NPS','num'],
+              ['open_tickets','Tickets','num'] ],
+    form:[
+      ['The company',[ ['account_name','Company name','text',true],
+        ['account_code','Account code','text'],
+        ['industry','Industry','enum:industry'],
+        ['solution_offered','Solution offered','enum:solution_type'],
+        ['solution_other','Others (specify)','text'],
+        ['region','Region','dim:region'], ['city','City','text'] ]],
+      ['Seller side',[ ['sales_poc_name','POC from the seller side','dim:sales_poc_name'],
+        ['sales_poc_email','Seller POC email','email'] ]],
+      ['Client contact',[ ['primary_contact_name','Primary contact of the client','text'],
+        ['primary_contact_email','Primary contact email','email'],
+        ['primary_contact_phone','Primary contact phone','text'] ]],
+      ['The deal',[ ['monthly_deal_value','Monthly deal size (INR)','number'],
+        ['contract_value','Annual contract value (INR)','number'],
+        ['billing_frequency','Billing frequency','enum:billing_frequency'],
+        ['seats','Seats','number'] ]],
+      ['Deal details',[ ['deal_details','Details of the deal','textarea'] ]],
+      ['Dates',[ ['contract_start','Deal start date','date'],
+        ['contract_end','Contract end','date'], ['renewal_date','Renewal date','date'] ]],
+      ['Status and servicing',[ ['account_status','Account status','enum:account_status'],
+        ['open_tickets','Open tickets','number'], ['nps','NPS (−100 to 100)','number'],
+        ['last_review_date','Last review','date'], ['next_review_date','Next review','date'] ]],
+      ['Notes',[ ['remarks','Remarks','textarea'] ]] ],
+    systemFields:[
+      ['id','Record number','ts:no'],
+      ['lead_sr_no','Linked lead','ts:no'],
+      ['owner','Created by','ts:owner'],
+      ['data_source','Entered via','ts:plain'],
+      ['import_batch_id','Import batch','ts:plain'],
+      ['created_at','Created','ts:time'],
+      ['updated_at','Last changed','ts:time'] ]
+  }
+};
+/* Every monetary field is INR. The currency column was removed because nothing
+   converted between currencies: totals summed the raw numbers and printed them
+   as rupees, which silently added unlike units. */
+
+/* Stage governs engagement status. This mirrors the leads_stage_engagement_chk
+   constraint in Postgres, which is the real enforcement; the copy here only
+   lets the form and the importer refuse a bad pairing before the round trip. */
+var STAGE_ENGAGEMENT = {
+  'Yet to Contact':           ['Engagement Yet to Start', 'Lead Not Qualified'],
+  'Contacted':                ['In Progress', 'Lead Gone Cold', 'Lead Not Qualified'],
+  'Demo Scheduled':           ['In Progress', 'Lead Gone Cold', 'Lead Not Qualified'],
+  'Demo Done':                ['In Progress', 'Lead Gone Cold', 'Lead Not Qualified'],
+  'Negotiations in Progress': ['In Progress', 'Lead Gone Cold', 'Lead Not Qualified'],
+  'Contract Signed':          ['Lead Closed']
+};
+function allowedEngagement(stage){
+  return STAGE_ENGAGEMENT[stage] || [];
+}
+
+/* =================== errors =================== */
+function fail(t,b){ $('errT').textContent=t; $('errB').textContent=b; $('err').hidden=false;
+  window.scrollTo({top:0,behavior:'smooth'}); }
+function clearFail(){ $('err').hidden = true; }
+
+/* =================== the only way to the database ===================
+   Every read and every write in this page goes through here, to the `api`
+   Edge Function. The page holds no table names and no SQL: it asks for an
+   action, and the function decides whether this account may have it.
+
+   The four auth calls below (signInWithPassword, signUp, updateUser,
+   getSession/signOut) are the single exception, and deliberately so: they
+   are what MINT the token every call here depends on, so they must go to
+   Supabase's own auth server. Nothing else talks to Supabase directly.
+
+   Rejections carry `stage`, which says which check failed:
+     token / identity  → not signed in, or the session has expired
+     permission        → signed in, but not allowed this
+     request           → the page asked for something malformed
+     query             → the database refused it (a constraint, usually)      */
+function api(action, payload, isPublic){
+  var body = payload || {};
+  body.action = action;
+  var headers = { 'Content-Type':'application/json' };
+  var token = (S.session && S.session.access_token) || '';
+  if (!isPublic){
+    if (!token){
+      var e = new Error('You are not signed in.'); e.stage='token';
+      return Promise.reject(e);
+    }
+    headers.Authorization = 'Bearer ' + token;
+  }
+  return window.fetch(SUPABASE_FN + 'api', {
+    method:'POST', headers:headers, body:JSON.stringify(body)
+  }).then(function(res){
+    return res.text().then(function(t){
+      var j={}; try { j=JSON.parse(t); } catch(_){ }
+      if (!res.ok || j.error){
+        var err = new Error(j.error || ('The backend answered '+res.status+'.'));
+        err.stage = j.stage || 'network'; err.status = res.status;
+        throw err;
+      }
+      return j;
+    });
+  });
+}
+
+/* One place that turns a rejection from api() into something on screen. */
+function apiFail(what, e){
+  var m = (e && e.message) || 'The request did not complete.';
+  var st = e && e.stage;
+  if (st==='token' || st==='identity')
+    fail('Your session has expired', m + ' Sign out and sign in again.');
+  else if (st==='permission')
+    fail('Not allowed', m);
+  else if (st==='network')
+    fail('The backend could not be reached', what + ' did not happen. ' + m);
+  else
+    fail(what + ' failed', m);
+}
+
+/* =================== auth =================== */
+var authMode='in';          // 'in' | 'request' | 'up'
+var blockedNotice=false;
+var pendingNotice=false;
+
+var AUTH_MODES = {
+  in:      { title:'Sign in',
+             lead:'Use the email and password for your approved account.',
+             go:'Sign in', swap:'I have been approved — create my account' },
+  request: { title:'Request an invite',
+             lead:'An administrator reviews every request and decides whether to '
+                + 'admit you as a user or an admin. On approval you are emailed a '
+                + 'link that sets up the account. Nothing is visible until then.',
+             go:'Send request', swap:'I have been approved — create my account' },
+  up:      { title:'Create your account',
+             lead:'Only needed if the invite email never arrived. Use the address '
+                + 'your invite was approved for; an account created with any other '
+                + 'address can sign in but will see nothing until an administrator '
+                + 'approves it.',
+             go:'Create account', swap:'Back to sign in' }
+};
+
+function setAuthMode(mode){
+  authMode = mode;
+  var c = AUTH_MODES[mode];
+  $('authTitle').textContent = c.title;
+  $('authLead').textContent  = c.lead;
+  $('aGo').textContent       = c.go;
+  $('authSwap').textContent  = c.swap;
+  $('nameWrap').hidden = (mode === 'in');
+  $('noteWrap').hidden = (mode !== 'request');
+  $('passWrap').hidden = (mode === 'request');
+  $('aPass').required  = (mode !== 'request');
+  $('aPass').setAttribute('autocomplete', mode==='in' ? 'current-password' : 'new-password');
+  $('modeIn').className  = 'ld-btn' + (mode==='in' ? ' primary' : '');
+  $('modeReq').className = 'ld-btn' + (mode==='request' ? ' primary' : '');
+  $('authMsg').textContent='';
+}
+$('modeIn').addEventListener('click',  function(){ setAuthMode('in'); });
+$('modeReq').addEventListener('click', function(){ setAuthMode('request'); });
+$('authSwap').addEventListener('click', function(){
+  setAuthMode(authMode === 'up' ? 'in' : 'up');
+});
+
+var REQUEST_REPLY = {
+  submitted:           'Request sent. An administrator will review it and decide '
+                     + 'whether to admit you as a user or an admin. On approval you '
+                     + 'will be emailed a link that sets the account up — check the '
+                     + 'spam folder, as it often lands there.',
+  already_pending:     'A request for that address is already waiting for a decision.',
+  already_approved:    'That address has already been approved — open the invite email '
+                     + 'and follow its link. If it never arrived, choose "I have been '
+                     + 'approved" below and create the account yourself.',
+  already_has_account: 'An account already exists for that address. Sign in instead.',
+  invalid_email:       'That does not look like an email address.',
+  too_long:            'That is longer than the form accepts. Shorten it and try again.'
+};
+
+$('authForm').addEventListener('submit', function(e){
+  e.preventDefault(); clearFail();
+  var email=$('aEmail').value.trim(), pass=$('aPass').value;
+
+  if (authMode === 'request'){
+    $('authMsg').textContent='Sending…';
+    // Public action: no token exists yet, so the backend lets this one through
+    // without one. It still validates the address and refuses duplicates.
+    api('request_access', { email:email, full_name:$('aName').value.trim(),
+                            note:$('aNote').value.trim() }, true)
+      .then(function(r){
+        $('authMsg').textContent = REQUEST_REPLY[r.result] || String(r.result);
+      })
+      .catch(function(e){ $('authMsg').textContent = e.message; });
+    return;
+  }
+
+  $('authMsg').textContent='Working…';
+  var p = authMode==='in'
+    ? sb.auth.signInWithPassword({email:email,password:pass})
+    : sb.auth.signUp({email:email,password:pass,
+        options:{data:{full_name:$('aName').value.trim()}}});
+  p.then(function(r){
+    if (r.error) {
+      var m = r.error.message || '';
+      // Translate the two errors that actually block a first sign-in.
+      if (/invalid login credentials/i.test(m))
+        m = 'That email and password do not match an account. If this is your '
+          + 'first time here, choose "Create an account instead" below.';
+      else if (/already registered|already exists/i.test(m))
+        m = 'An account already exists for that address — the invite email created '
+          + 'it for you. Open that email and follow its link to set a password, or '
+          + 'sign in if you have already set one.';
+      else if (/email not confirmed/i.test(m))
+        m = 'The address has not been confirmed yet. Open the confirmation email, '
+          + 'or switch off Confirm email in Supabase under Authentication, '
+          + 'then sign in again.';
+      $('authMsg').textContent = m;
+      return;
+    }
+    if (authMode==='up' && !r.data.session){
+      $('authMsg').textContent = 'Account created. Confirm the address by email, then sign in. '
+        + 'To skip confirmation, switch off Confirm email in Supabase under Authentication.';
+      return;
+    }
+    $('authMsg').textContent='';
+  });
+});
+$('outBtn').addEventListener('click', function(){ sb.auth.signOut(); });
+
+/* --- arriving from an invite email: no password is set yet --- */
+$('passForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  $('passMsg').textContent = 'Saving…'; $('passGo').disabled = true;
+  sb.auth.updateUser({ password: $('newPass').value }).then(function(r){
+    $('passGo').disabled = false;
+    if (r.error){ $('passMsg').textContent = r.error.message; return; }
+    $('passMsg').textContent = 'Password saved. You can sign in with it from now on.';
+    $('newPass').value = '';
+    window.setTimeout(function(){ $('setPass').hidden = true; }, 2500);
+  });
+});
+
+/* =================== routing =================== */
+var ROUTES=['home','pipeline','accounts','users'];
+function go(r){ if (location.hash !== '#'+r) location.hash = r; else route(); }
+function route(){
+  var r = (location.hash||'#home').slice(1);
+  S.route = ROUTES.indexOf(r)>=0 ? r : 'home';
+  if (S.route==='users' && !isAdmin()) S.route='home';
+  $('vHome').hidden  = S.route!=='home';
+  $('vUsers').hidden = S.route!=='users';
+  $('vMod').hidden   = !(S.route==='pipeline' || S.route==='accounts');
+  Array.prototype.forEach.call(document.querySelectorAll('#nav a'), function(a){
+    if (a.dataset.r===S.route) a.setAttribute('aria-current','page');
+    else a.removeAttribute('aria-current'); });
+  if (S.route==='home') loadHome();
+  else if (S.route==='users'){ loadRequests(); loadUsers(); }
+  else openModule(S.route);
+}
+window.addEventListener('hashchange', route);
+Array.prototype.forEach.call(document.querySelectorAll('[data-go]'), function(b){
+  b.addEventListener('click', function(){ go(b.dataset.go); }); });
+
+function isAdmin(){ return !!(S.profile && S.profile.role==='admin'); }
+function myEmail(){ return ((S.session&&S.session.user&&S.session.user.email)||'').toLowerCase(); }
+
+/* =================== boot =================== */
+function boot(){
+  if (!sb){ $('boot').hidden=true;
+    return fail('The Supabase library did not load',
+      'Reload the page. The script was blocked before the client could be created.'); }
+  sb.auth.getSession().then(function(r){
+    S.session = r.data.session;
+    sb.auth.onAuthStateChange(function(_e,s){ S.session=s; afterAuth(); });
+    afterAuth();
+  });
+}
+function afterAuth(){
+  $('boot').hidden = true;
+  var inApp = !!S.session;
+  $('vAuth').hidden = inApp;
+  $('nav').hidden = !inApp;
+  $('sideWho').hidden = !inApp;
+  if (!inApp){
+    ['vHome','vMod','vUsers'].forEach(function(v){ $(v).hidden=true; });
+    $('setPass').hidden = true;
+    S.profile=null;
+    if (blockedNotice){
+      blockedNotice = false;
+      setAuthMode('in');
+      $('authMsg').textContent = 'This account has been blocked by an administrator. '
+        + 'Contact them to have access restored.';
+      $('firstRun').textContent = '';
+    } else if (pendingNotice){
+      pendingNotice = false;
+      setAuthMode('request');
+      $('authMsg').textContent = 'Your account exists but has not been approved yet, '
+        + 'so no data is visible. An administrator decides each request. If you have '
+        + 'not asked for access, send a request below.';
+      $('firstRun').textContent = '';
+    } else { checkFirstRun(); }
+    return;
+  }
+  $('sideEmail').textContent = S.session.user.email||'';
+  // Came in on an invite or a recovery link: there is no password on the
+  // account yet, so offer to set one before anything else.
+  if (ARRIVED_AS === 'invite' || ARRIVED_AS === 'recovery') $('setPass').hidden = false;
+  // One call brings up the whole session: who this account is, what it may do,
+  // the dropdown vocabulary, and whether there is unclaimed data. If the
+  // backend refuses it on permission grounds the account is not approved or
+  // has been blocked, and the session ends — a token already issued stays
+  // valid until it expires, so signing out is what actually shuts the door.
+  api('session', {})
+    .then(function(b){
+      S.perm = b.permissions;
+      S.profile = { role: b.permissions.role, is_active: true,
+                    email: b.permissions.email };
+      S.unowned = b.unowned_count || 0;
+      var by={}; (b.lists||[]).forEach(function(x){
+        (by[x.list]=by[x.list]||[]).push(x.value); });
+      S.lists = by;
+
+      var rl = $('sideRole');
+      rl.className = 'ld-chip ' + (isAdmin()?'ontrack':'neutral');
+      rl.textContent=''; rl.append(el('span','sh'));
+      rl.append(document.createTextNode(isAdmin()?'Admin':'User'));
+      $('navUsers').hidden = !isAdmin();
+      applyPermissions();
+      route();
+    })
+    .catch(function(e){
+      if (e.stage === 'permission'){
+        // Work out which notice to show, then end the session.
+        return api('my_state', {}).then(function(s){
+          if (s.request_status === 'Approved') blockedNotice = true;
+          else pendingNotice = true;
+        }).catch(function(){ pendingNotice = true; })
+          .then(function(){ return sb.auth.signOut(); });
+      }
+      apiFail('Opening the workspace', e);
+    });
+}
+/* First run: if no one has signed up, open on the sign-up form rather than
+   letting a sign-in fail against an empty workspace. */
+function checkFirstRun(){
+  var p = $('firstRun'); if (!p) return;
+  api('workspace_has_users', {}, true).then(function(r){
+    if (r.has_users === false){
+      p.textContent = 'No one has signed up yet. The first account created with the '
+        + 'bootstrap address becomes the admin.';
+      if (authMode === 'in') setAuthMode('up');
+    } else {
+      p.textContent = 'Sign in if you already have an approved account, or request an '
+        + 'invite. New accounts see nothing until an administrator approves them.';
+    }
+  }).catch(function(){
+    p.textContent = 'Sign in, or create an account if this is your first visit.';
+  });
+}
+
+function loadDims(mod){
+  if (S.dims[mod]) return Promise.resolve(S.dims[mod]);
+  return api('dimensions',{module:mod}).then(function(r){
+    var by={}; (r.dimensions||[]).forEach(function(x){
+      (by[x.dimension]=by[x.dimension]||[]).push(x.value); });
+    S.dims[mod]=by; return by;
+  }).catch(function(e){ apiFail('Reading the filter values', e); return {}; });
+}
+
+/* =================== home =================== */
+/* The landing page holds no figures of its own. Nothing is read from the
+   database until a module is opened, and that read goes through the backend,
+   which decides whether this account may see it. The unclaimed-records count
+   came back with the session, so this draws without a call of its own. */
+function loadHome(){
+  var cb=$('claimBox'); cb.textContent='';
+  var n_ = S.unowned || 0;
+  if (!n_) return;
+  var n=el('div','ld-note');
+  n.append(el('p','ld-title', n_+' records have no owner recorded'));
+  n.append(el('p','ld-body','Sample data was loaded before any account existed. '
+    +'Claiming it records you as the creator. Every approved user can already read it.'));
+  var b=el('button','ld-btn primary','Claim '+n_+' records');
+  b.style.marginTop='var(--space-3)';
+  b.addEventListener('click', function(){
+    b.disabled=true; b.textContent='Claiming…';
+    api('claim_data', {})
+      .then(function(){ return api('unowned_count', {}); })
+      .then(function(r){ S.unowned = r.count||0; loadHome(); })
+      .catch(function(e){ apiFail('Claiming the records', e); b.disabled=false;
+                          b.textContent='Claim '+n_+' records'; });
+  });
+  n.append(b); cb.append(n);
+}
+
+/* =================== module =================== */
+function openModule(key){
+  var M=MODULES[key]; if(!M) return;
+  S.mod=key;
+  if (!S.sel[key].group)
+    S.sel[key] = { group:M.groupBy[0][0], metric:M.metrics[0][0], agg:'sum' };
+  $('kanTitle').textContent = M.kanTitle;
+  buildSelects(M,key);
+  buildFilters(M,key).then(refresh);
+}
+function buildSelects(M,key){
+  var g=$('selGroup'), m=$('selMetric'), a=$('selAgg');
+  g.textContent=''; m.textContent='';
+
+  syncScope(M,key);
+
+  M.groupBy.forEach(function(x){ g.append(new Option(x[1],x[0])); });
+  M.metrics.forEach(function(x){ m.append(new Option(x[1],x[0])); });
+  // A choice that is no longer offered must not leave the select blank.
+  if (!M.groupBy.some(function(x){ return x[0]===S.sel[key].group; }))
+    S.sel[key].group = M.groupBy[0][0];
+  if (!M.metrics.some(function(x){ return x[0]===S.sel[key].metric; }))
+    S.sel[key].metric = M.metrics[0][0];
+  g.value=S.sel[key].group; m.value=S.sel[key].metric; a.value=S.sel[key].agg;
+  g.onchange=function(){ S.sel[key].group=g.value; refresh(); };
+  m.onchange=function(){ S.sel[key].metric=m.value; refresh(); };
+  a.onchange=function(){ S.sel[key].agg=a.value; refresh(); };
+}
+
+/* The scope dropdown in the chart row. Where the same field also has a chip row,
+   both read and write one piece of state, and this redraws the dropdown so the
+   two can never disagree. */
+function syncScope(M,key){
+  var sc=$('selScope'), sf=M.scopeFilter;
+  if (!sc || !sf) return;
+  $('selScopeLabel').textContent = sf[1];
+  sc.textContent='';
+  sc.append(new Option('All — no filter',''));
+  (S.lists[sf[2]]||[]).forEach(function(v){ sc.append(new Option(v,v)); });
+  var cur = (S.filters[key][sf[0]]||[]);
+  if (cur.length > 1){
+    // Several values chosen from the chips: say so rather than showing "All"
+    // over a filter that is in fact applied.
+    sc.append(new Option(cur.length+' selected','__multi__'));
+    sc.value = '__multi__';
+  } else {
+    sc.value = cur.length === 1 ? cur[0] : '';
+  }
+  sc.onchange = function(){
+    if (sc.value === '__multi__') return;
+    if (sc.value) S.filters[key][sf[0]] = [sc.value];
+    else delete S.filters[key][sf[0]];
+    persistFilters();
+    buildFilters(M,key).then(refresh);
+  };
+}
+
+function buildFilters(M,key){
+  var bar=$('filterBar'); bar.textContent='';
+  var f=S.filters[key]=S.filters[key]||{};
+
+  function group(label, values, fkey){
+    if (!values.length) return;
+    var row=el('div','ld-fgroup');
+    row.append(el('span','ld-label',label));
+    values.forEach(function(v){
+      var c=el('button','ld-fchip',v); c.type='button';
+      var on=(f[fkey]||[]).indexOf(v)>=0;
+      c.setAttribute('aria-pressed',String(on));
+      c.addEventListener('click',function(){
+        var cur=f[fkey]||[], has=cur.indexOf(v)>=0;
+        var next = has ? cur.filter(function(x){return x!==v;}) : cur.concat([v]);
+        if (next.length) f[fkey]=next; else delete f[fkey];
+        c.setAttribute('aria-pressed',String(!has));
+        persistFilters();
+        // Keep the scope dropdown in step when it shares this field.
+        if (M.scopeFilter && fkey === M.scopeFilter[0]) syncScope(M,key);
+        refresh();
+      });
+      row.append(c);
+    });
+    bar.append(row);
+  }
+
+  M.enumFilters.forEach(function(x){ group(x[1], S.lists[x[2]]||[], x[0]); });
+
+  return loadDims(key).then(function(dims){
+    M.dimFilters.forEach(function(x){ group(x[1], (dims[x[0]]||[]).slice(0,12), x[0]); });
+
+    var ctl=el('div','ld-frow');
+    var dfSel=el('select'); dfSel.style.width='auto';
+    M.dateFields.forEach(function(d){ dfSel.append(new Option(d[1],d[0])); });
+    dfSel.value = f.date_field || M.dateFields[0][0];
+    dfSel.setAttribute('aria-label','Date field to filter on');
+    dfSel.onchange=function(){ f.date_field=dfSel.value; persistFilters(); refresh(); };
+    ctl.append(el('span','ld-label','Period'), dfSel);
+
+    [['date_from','from'],['date_to','to']].forEach(function(d){
+      var i=el('input'); i.type='date'; i.value=f[d[0]]||''; i.style.width='auto';
+      i.setAttribute('aria-label','Date '+d[1]);
+      i.onchange=function(){ if(i.value) f[d[0]]=i.value; else delete f[d[0]];
+        f.date_field=dfSel.value; persistFilters(); refresh(); };
+      ctl.append(el('span','ld-caption',d[1]), i);
+    });
+
+    var si=el('input'); si.type='text'; si.placeholder='company, contact or note';
+    si.value=f.search||''; si.style.width='200px';
+    si.setAttribute('aria-label','Search');
+    var tmr; si.oninput=function(){ clearTimeout(tmr); tmr=setTimeout(function(){
+      if (si.value.trim()) f.search=si.value.trim(); else delete f.search;
+      persistFilters(); refresh(); },350); };
+    ctl.append(el('span','ld-label','Search'), si);
+
+    ctl.append(el('div','grow'));
+    var shown=el('span','ld-shown'); shown.id='shownCount'; ctl.append(shown);
+    var clr=el('button','ld-btn sm','Clear all'); clr.type='button';
+    clr.addEventListener('click', function(){
+      S.filters[key]={}; persistFilters();
+      buildFilters(M,key).then(refresh);
+    });
+    ctl.append(clr);
+    bar.append(ctl);
+  });
+}
+
+function activeFilterCount(){
+  var f=S.filters[S.mod]||{};
+  return Object.keys(f).filter(function(k){
+    return Array.isArray(f[k]) ? f[k].length : (k!=='date_field' && f[k]); }).length;
+}
+
+function refresh(){
+  var key=S.mod, M=MODULES[key]; if(!M) return;
+  var f=S.filters[key], sel=S.sel[key];
+  clearFail();
+  $('modEyebrow').textContent = M.title + ' · as at ' + longDate(new Date());
+
+  // One request for the whole module. The backend, not this page, decides
+  // whether this account may read anything: no bearer token, an expired one,
+  // or an account that is blocked or unapproved all come back as an error
+  // with no data attached. See edge/api/index.ts.
+  var ask = { module:key, filters:f, group_by:sel.group, metric:sel.metric,
+              agg:sel.agg, limit:300, need_totals: !S.totals[key] };
+  if (key==='pipeline'){ ask.sort='days_since_contact'; ask.desc=true; }
+
+  api('module', ask).then(function(b){
+    if (b.totals) S.totals[key] = b.totals;
+    S.perm = b.permissions || S.perm;
+    applyPermissions();
+    var tot = S.totals[key]||{};
+    if (key==='pipeline')
+      paintPipeline(M, b.summary||{}, tot, b.breakdown||[], b.rows||[],
+                    b.kanban||[], sel, b.top||[]);
+    else
+      paintAccounts(M, b.summary||{}, tot, b.breakdown||[], b.rows||[],
+                    b.kanban||[], sel);
+  }).catch(function(e){ apiFail('Opening '+M.title, e); });
+}
+
+/* The backend's answer, not the page's guess, decides what is offered. */
+function applyPermissions(){
+  var p = S.perm || {};
+  var canWrite = p.can_write !== false;
+  ['addBtn','upBtn'].forEach(function(id){
+    var b=$(id); if (b) b.hidden = !canWrite;
+  });
+}
+
+/* ---------- pipeline view ---------- */
+function paintPipeline(M,s,tot,bk,rows,kan,sel,top){
+  var nFilters = activeFilterCount();
+  var totalLeads = Number(tot.leads||s.leads||0);
+
+  // Verdict headline, one marked phrase, tone matching the number's status.
+  var wr = s.win_rate==null?null:Number(s.win_rate);
+  var stale = Number(s.stale_leads||0);
+  var head;
+  if (wr != null){
+    head = money(s.live_value) + ' is live in the pipeline, and the win rate on '
+      + 'qualified leads is '
+      + mark(pct(wr), wr>=50?'blue':wr>=40?'orange':'red') + '.';
+  } else {
+    head = money(s.live_value) + ' is live in the pipeline across '
+      + mark(num(s.live_leads)+' leads in progress','blue') + '.';
+  }
+  $('modHeadline').innerHTML = head;
+
+  var sc=$('shownCount');
+  if (sc) sc.textContent = nFilters
+    ? ('Showing '+num(s.leads)+' of '+num(totalLeads)+' leads')
+    : ('All '+num(totalLeads)+' leads');
+
+  // ----- KPI strip: four tiles -----
+  var demoShare = share(s.demos_conducted, s.leads);
+  var cands = [
+    { status: stale>5 ? 'critical' : stale>0 ? 'watch' : 'ontrack', severity: stale },
+    { status: (wr!=null && wr<40) ? 'critical' : (wr!=null && wr<50) ? 'watch' : 'ontrack',
+      severity: wr==null?0:(50-wr) }
+  ];
+  oneRed(cands);
+
+  var strip=$('strip'); strip.textContent='';
+  strip.append(kpi({ label:'Live pipeline (INR)', value:money(s.live_value),
+    status:'neutral', chipLabel:'No target',
+    caption:num(s.live_leads)+' leads in progress',
+    explain:'Sum of deal value for leads whose engagement status is "In Progress". '
+      + 'Leads yet to start are excluded, as are signed, gone-cold and unqualified '
+      + 'ones. Leads with no deal value entered contribute nothing.' }));
+  strip.append(kpi({ label:'Demos conducted', value:num(s.demos_conducted),
+    status:'neutral', chipLabel:'No target',
+    delta: demoShare==null?null:pct(demoShare),
+    caption:'of '+num(s.leads)+' leads reached demo or beyond',
+    explain:'Count of leads whose stage is Demo Done, Negotiations in Progress or '
+      + 'Contract Signed. It counts leads that have passed the demo, so a lead at '
+      + '"Demo Scheduled" is not included. Signed and lost leads are counted, since '
+      + 'the demo still happened. The percentage is this count over all leads in view.' }));
+  strip.append(kpi({ label:'Win rate', value:pct(wr), status:cands[1].status,
+    caption:num(s.signed)+' closed of '+num(s.qualified_base)+' qualified leads',
+    explain:'Leads with engagement "Lead Closed" divided by the qualified base. '
+      + 'That base is every lead, less those yet to start, less those not '
+      + 'qualified, less leads in progress for under three months — so it '
+      + 'counts closed leads, gone-cold leads, and leads in progress for three '
+      + 'months or more. A recent lead is excluded because it has not had time to '
+      + 'be won or lost. Three months is measured from the first contact date, so '
+      + 'a lead crosses into the base on its own as time passes.' }));
+  strip.append(kpi({ label:'Not contacted 21 days', value:num(stale),
+    status:cands[0].status,
+    caption: stale>0 ? money(s.stale_value)+' at risk of going cold'
+                     : 'every live lead contacted within 21 days',
+    explain:'Count of leads with engagement "In Progress" whose last contact date is '
+      + 'more than 21 days ago, or blank. Leads at "Yet to Contact" are excluded: '
+      + 'they have not gone quiet, they have not started. 21 days is a fixed '
+      + 'threshold, not derived from your data.' }));
+
+  // ----- Kanban -----
+  var maxN = Math.max.apply(null, kan.map(function(k){ return Number(k.n); }).concat([1]));
+  var kanHost=$('kanban'); kanHost.textContent='';
+  var kanTotal = kan.reduce(function(a,k){ return a+Number(k.n); },0);
+  $('kanCap').textContent = num(kanTotal)+' leads across six stages · bar length is share of the largest stage';
+  kan.forEach(function(k){
+    var c=el('div','ld-kancol');
+    var st=el('p','st ld-label');
+    st.append(defineTerm(k.stage,
+      'Leads whose current stage is "'+k.stage+'". The count is the number of leads; '
+      + 'the figure beneath is the sum of their deal value; the line under that splits '
+      + 'them by engagement status. All four respect the filters above. The bar length '
+      + 'is this count against the largest stage, not against a target.'));
+    c.append(st);
+    c.append(el('p','ct',num(k.n)));
+    var tr=el('div','ld-kantrack');
+    var fl=el('div','ld-kanfill'+(k.stage==='Contract Signed'?' ontrack':''));
+    fl.style.width = (Number(k.n)/maxN*100)+'%';
+    tr.append(fl); c.append(tr);
+    c.append(el('p','amt ld-body-sm', money(k.total_value)));
+    // Engagement split within the stage. Zero counts are left out rather than
+    // printed, so the line says only what is actually there.
+    var parts=[];
+    if (Number(k.active_n)) parts.push(num(k.active_n)+' live');
+    if (Number(k.closed_n)) parts.push(num(k.closed_n)+' closed');
+    if (Number(k.cold_n))   parts.push(num(k.cold_n)+' gone cold');
+    if (Number(k.unqual_n)) parts.push(num(k.unqual_n)+' not qualified');
+    c.append(el('p','ld-caption', parts.length ? parts.join(' · ') : 'no leads here'));
+    var sh = share(k.n, kanTotal);
+    c.append(el('p','ld-caption', sh==null?'—':pct(sh)+' of leads shown'));
+    kanHost.append(c);
+  });
+  $('kanCap').textContent = num(kanTotal)
+    + ' leads across six stages · engagement status shown within each, as the '
+    + 'two fields are tied · bar length is share of the largest stage';
+
+  paintBreakdown(M,bk,sel);
+  paintTopLeads(top||[]);
+  paintTable(M,rows,'pipeline');
+  $('tblTitle').textContent='Leads';
+  $('tblCap').textContent = rows.length+' rows, those needing contact first';
+}
+
+/* ---------- accounts view ---------- */
+function paintAccounts(M,s,tot,bk,rows,kan,sel){
+  var nFilters=activeFilterCount();
+  var totalAcc=Number(tot.accounts||s.accounts||0);
+
+  // Figures come from SQL now rather than being recomputed over the loaded rows,
+  // so they are correct however many accounts exist.
+  var atRiskValue = Number(s.adverse_value||0);
+  var riskShare = share(atRiskValue, s.total_acv);
+  var overdue = Number(s.overdue_renewals||0);
+
+  var cands=[
+    { status: riskShare>20?'critical':riskShare>8?'watch':'ontrack', severity:riskShare||0 },
+    { status: overdue>3?'critical':overdue>0?'watch':'ontrack', severity:overdue }
+  ];
+  oneRed(cands);
+
+  var head;
+  if (atRiskValue > 0){
+    head = money(s.total_acv)+' under management, with '
+      + mark(money(atRiskValue)+' at risk or churned', cands[0].status==='critical'?'red':'orange')
+      + ' across '+num(s.adverse)+' accounts.';
+  } else {
+    head = money(s.total_acv)+' under management, with '
+      + mark('no accounts at risk or churned','blue')+'.';
+  }
+  $('modHeadline').innerHTML = head;
+
+  var sc=$('shownCount');
+  if (sc) sc.textContent = nFilters
+    ? ('Showing '+num(s.accounts)+' of '+num(totalAcc)+' accounts')
+    : ('All '+num(totalAcc)+' accounts');
+
+  var activeShare = share(s.active_acv, s.total_acv);
+  var strip=$('strip'); strip.textContent='';
+  strip.append(kpi({ label:'Annual contract value (INR)', value:money(s.total_acv),
+    status:'neutral', chipLabel:'No target',
+    caption:'summed across '+num(s.accounts)+' accounts',
+    explain:'Sum of annual contract value across every account in view, churned '
+      + 'ones included. Where an account has only a monthly figure, that figure is '
+      + 'multiplied by 12. Where it has both, the annual figure is used as entered.' }));
+  strip.append(kpi({ label:'Monthly recurring (INR)', value:money(s.mrr),
+    status:'neutral', chipLabel:'No target',
+    caption:'vs '+money(s.total_acv)+' annualised',
+    explain:'Sum of the monthly deal size field across accounts in view. Accounts '
+      + 'with no monthly figure entered contribute nothing, so this can read lower '
+      + 'than one twelfth of annual value rather than matching it exactly.' }));
+  strip.append(kpi({ label:'Active book (INR)', value:money(s.active_acv),
+    status:'neutral', chipLabel:'No target',
+    delta: activeShare==null?null:pct(activeShare),
+    caption:'of total value, excluding churned accounts',
+    explain:'Annual value of every account except those marked Churned, which count '
+      + 'as zero. Accounts that are At Risk or Paused are still counted in full: '
+      + 'they have not left yet. The percentage is this figure over annual '
+      + 'contract value.' }));
+  strip.append(kpi({ label:'At risk or churned (INR)', value:money(atRiskValue),
+    status:cands[0].status,
+    delta: riskShare==null?null:pct(riskShare),
+    caption:num(s.at_risk)+' at risk, '+num(s.churned)+' churned, '
+      + num(s.paused)+' paused',
+    explain:'Annual value of accounts whose status is "At Risk" or "Churned". '
+      + 'Paused accounts are excluded here and shown in orange on the board, '
+      + 'because a pause can be reversed. The percentage is this value over annual '
+      + 'contract value. Status is entered by hand, not calculated, so the figure '
+      + 'is only as current as the last time someone updated it.' }));
+  strip.append(kpi({ label:'Renewals due', value:num(s.renewals_90d),
+    status:cands[1].status,
+    caption: overdue>0 ? num(overdue)+' already overdue, within 90 days'
+                       : 'within 90 days, none overdue',
+    explain:'Count of accounts whose renewal date falls in the next 90 days, counting '
+      + 'from today. Where no renewal date is set, the contract end date is used '
+      + 'instead. Accounts whose date has already passed are reported separately as '
+      + 'overdue and are not inside this count.' }));
+
+  var maxN=Math.max.apply(null, kan.map(function(k){return Number(k.n);}).concat([1]));
+  var kanTotal=kan.reduce(function(a,k){ return a+Number(k.n); },0);
+  var kanHost=$('kanban'); kanHost.textContent='';
+  $('kanCap').textContent = num(kanTotal)+' accounts across six states · bar length is share of the largest state';
+  kan.forEach(function(k){
+    var c=el('div','ld-kancol');
+    var st=el('p','st ld-label');
+    st.append(defineTerm(k.stage,
+      'Accounts whose status is "'+k.stage+'". The count is the number of accounts and '
+      + 'the figure beneath is their combined annual value, both after the filters '
+      + 'above. Status is entered by hand on each account, not derived from dates. '
+      + 'At Risk and Churned are shown in red, Paused in orange, Active and Renewed '
+      + 'in blue. The bar length is this count against the largest status, not '
+      + 'against a target.'));
+    c.append(st);
+    c.append(el('p','ct',num(k.n)));
+    var tr=el('div','ld-kantrack');
+    var cls = (k.stage==='Active'||k.stage==='Renewed') ? ' ontrack'
+            : (k.stage==='At Risk'||k.stage==='Churned') ? ' critical'
+            : (k.stage==='Paused') ? ' watch' : '';
+    var fl=el('div','ld-kanfill'+cls);
+    fl.style.width=(Number(k.n)/maxN*100)+'%';
+    tr.append(fl); c.append(tr);
+    c.append(el('p','amt ld-body-sm', money(k.total_value)));
+    var sh=share(k.n,kanTotal);
+    c.append(el('p','ld-caption', sh==null?'—':pct(sh)+' of accounts shown'));
+    kanHost.append(c);
+  });
+
+  paintBreakdown(M,bk,sel);
+  paintVariance(rows,'accounts',s);
+  paintTable(M,rows,'accounts');
+  $('tblTitle').textContent='Accounts';
+  $('tblCap').textContent = rows.length+' rows, soonest renewal first';
+}
+
+/* ---------- breakdown bars ---------- */
+function paintBreakdown(M,rows,sel){
+  var host=$('bars'); host.textContent='';
+  var gl=(M.groupBy.filter(function(x){return x[0]===sel.group;})[0]||[])[1]||sel.group;
+  var mi=M.metrics.filter(function(x){return x[0]===sel.metric;})[0]||[];
+  var ml=mi[1]||sel.metric, kind=mi[2]||'num';
+  var aggWord={sum:'Total',avg:'Average',count:'Count of',max:'Highest',min:'Lowest'}[sel.agg];
+  var titleText = sel.agg==='count'
+    ? ('Records by '+gl) : (aggWord+' '+ml.toLowerCase()+' by '+gl);
+  var ch=$('chTitle'); ch.textContent='';
+  ch.append(defineTerm(titleText,
+    sel.agg==='count'
+      ? ('Every record in view is placed in a bucket by its '+gl.toLowerCase()
+         + ', and the bars count the records in each. Rows with nothing recorded for '
+         + gl.toLowerCase()+' fall into "(blank)".')
+      : ('Records in view are grouped by '+gl.toLowerCase()+', then '+ml.toLowerCase()
+         + ' is aggregated within each group using '
+         + {sum:'a sum',avg:'an average',max:'the maximum',min:'the minimum'}[sel.agg]
+         + '. Empty values are skipped rather than counted as zero, so an average is '
+         + 'over the records that have a figure. The number in brackets is how many '
+         + 'records are in that group.')));
+
+  if (!rows.length){
+    $('chCap').textContent='';
+    host.append(el('p','ld-empty','No records match. Relax the stage or period filter to see more.'));
+    return;
+  }
+  var fmt = sel.agg==='count' ? num : (kind==='money'?money:num);
+  var vals = rows.map(function(r){ return Math.abs(Number(r.value)||0); });
+  var max = Math.max.apply(null, vals.concat([1]));
+  var mean = vals.reduce(function(a,b){return a+b;},0)/vals.length;
+  $('chCap').textContent = 'Dashed line marks the average of '+fmt(mean)
+    +' across '+rows.length+' groups. Bars share one scale.';
+
+  rows.forEach(function(r){
+    var v=Number(r.value)||0;
+    host.append(vbar({ label:r.bucket, actual:Math.abs(v), max:max, target:mean,
+      valueLabel: fmt(r.value)+'  ('+num(r.n)+')', status:'neutral' }));
+  });
+}
+
+/* ---------- largest live deals ---------- */
+function paintTopLeads(top){
+  var host=$('variance'); host.textContent='';
+  $('varTitle').textContent = 'Largest live deals';
+  $('varCap').textContent = 'The five highest-value leads whose engagement status is '
+    + '"In Progress", ranked by deal value. Days run from first contact to today, '
+    + 'recounted on every refresh.';
+  if (!top.length){
+    host.append(el('p','ld-empty',
+      'No leads are in progress in this selection. Relax the stage or engagement filter.'));
+    return;
+  }
+  var mx = Math.max.apply(null, top.map(function(t){
+    return Number(t.deal_value)||0; }).concat([1]));
+  top.forEach(function(t){
+    var d = t.days_since_first_contact;
+    host.append(vbar({
+      label: t.company_name,
+      actual: Number(t.deal_value)||0,
+      max: mx,
+      valueLabel: money(t.deal_value) + '   ' + (d==null ? 'no start date' : num(d)+' days'),
+      status: 'neutral',
+      caption: (t.sales_poc_name || 'no POC assigned') + ' · ' + t.current_stage
+               + (t.first_contact_date ? ' · from ' + t.first_contact_date : '')
+    }));
+  });
+}
+
+/* ---------- where to look first (accounts only) ---------- */
+function paintVariance(rows, key, s){
+  var host=$('variance'); host.textContent='';
+  var items=[];
+  {
+    var vt=$('varTitle'); vt.textContent='';
+    vt.append(defineTerm('Where to look first',
+      'The six accounts with the nearest renewal date, soonest first, taken from the '
+      + 'rows in view. Days are the renewal date minus today, so a negative number '
+      + 'means the date has already passed. Where no renewal date is set, the '
+      + 'contract end date is used. The bar is how close the renewal is, not value: '
+      + 'a longer bar means less time left.'));
+    $('varCap').textContent='Accounts closest to renewal. Negative days are already overdue.';
+    items = rows.filter(function(r){ return r.days_to_renewal!=null; })
+      .sort(function(a,b){ return a.days_to_renewal - b.days_to_renewal; })
+      .slice(0,6)
+      .map(function(r){
+        var d=Number(r.days_to_renewal);
+        return { label:r.account_name, actual:Math.max(0,120-d),
+                 valueLabel:(d<0?('−'+num(-d)+' days'):(num(d)+' days'))+'  '+money(r.annualised_value),
+                 status: d<0?'critical':d<=30?'watch':'neutral', severity:-d,
+                 caption:r.account_status+' · '+(r.sales_poc_name||'no POC assigned') };
+      });
+  }
+  if (!items.length){
+    host.append(el('p','ld-empty','Nothing needs attention in this selection.'));
+    return;
+  }
+  oneRed(items);
+  var mx=Math.max.apply(null, items.map(function(i){return i.actual;}).concat([1]));
+  items.forEach(function(i){
+    host.append(vbar({ label:i.label, actual:i.actual, max:mx,
+      valueLabel:i.valueLabel, status:i.status, caption:i.caption }));
+  });
+}
+
+/* ---------- table ---------- */
+/* Definitions for table column headers. Only columns whose meaning is not obvious
+   from the name appear here; a plain Company column needs no gloss. */
+var COLUMN_HELP = {
+  current_stage:  'How far the deal has progressed, from Yet to Contact through to '
+    + 'Contract Signed. Typed in, and it governs which engagement statuses are allowed.',
+  overall_status: 'Whether the engagement is yet to start, in progress, closed, gone '
+    + 'cold or not qualified. The database restricts this to the values the current '
+    + 'stage permits.',
+  deal_value:     'The amount entered for this deal, in rupees. Not weighted by '
+    + 'likelihood and not converted from any other currency — every figure is INR.',
+  weighted_value: 'Deal value multiplied by the close probability of the current '
+    + 'stage: 5% at Yet to Contact rising to 100% at Contract Signed. The weights '
+    + 'are a default, not measured from your own win history.',
+  days_since_contact: 'Today minus the last contact date, recounted on every refresh. '
+    + 'Blank where no contact has been recorded.',
+  next_action_date: 'The date typed into the lead as the next planned action. Nothing '
+    + 'reminds anyone of it; it is a record, not an alert.',
+  solution_offered: 'Which offering is being sold, from a fixed list shared with the '
+    + 'account module. "Others" means the Others field should name it.',
+  account_status: 'The account’s state, typed in by hand. At Risk and Churned '
+    + 'show red, Paused orange, Active and Renewed blue.',
+  monthly_deal_value: 'The monthly recurring amount entered for this account, in '
+    + 'rupees. Blank where only an annual figure was recorded.',
+  annualised_value: 'The annual contract value as entered. Where only a monthly '
+    + 'figure exists, it is that figure multiplied by 12.',
+  days_to_renewal: 'Renewal date minus today, recounted on every refresh. A negative '
+    + 'number means the renewal date has already passed. Falls back to the contract '
+    + 'end date where no renewal date is set.',
+  renewal_window: 'Which bucket the renewal falls into: Overdue, Next 30 days, Next '
+    + '90 days or Later. Derived from the renewal date, not typed in.',
+  nps:            'The Net Promoter Score recorded for this account, from −100 '
+    + 'to 100. Entered by hand after a survey; it is not calculated here.',
+  open_tickets:   'The number of open support tickets, as last entered. Not connected '
+    + 'to any support system, so it is only as current as the last update.',
+  contract_start: 'The date the deal started. Also used as the contract start for the '
+    + 'renewal calculation.',
+  sales_poc_name: 'The person on your side who owns this record. It also decides who '
+    + 'may edit it: you can change rows where you are the POC, admins can change any.'
+};
+
+var CHIPMAP = {
+  stage:   function(v){ return v==='Contract Signed'?'ontrack':'neutral'; },
+  overall: function(v){ return v==='Lead Closed'?'ontrack'
+    : v==='Lead Gone Cold'?'watch' : v==='Lead Not Qualified'?'neutral' : 'neutral'; },
+  // Status now carries the colour that health used to. At Risk and Churned are
+  // breaches that need a decision, so they read red; Paused is drift that can be
+  // reversed, so it reads orange.
+  astatus: function(v){ return (v==='Active'||v==='Renewed')?'ontrack'
+    : (v==='At Risk'||v==='Churned')?'critical'
+    : v==='Paused'?'watch':'neutral'; },
+  renew:   function(v){ return v==='Overdue'?'critical'
+    : (v==='Next 30 days'||v==='Next 90 days')?'watch':'neutral'; }
+};
+
+function paintTable(M,rows,key){
+  var th=$('tbl').querySelector('thead'), tb=$('tbl').querySelector('tbody');
+  th.textContent=''; tb.textContent='';
+  if (!rows.length){
+    var tr0=el('tr'), td0=el('td'); td0.colSpan=99;
+    td0.append(el('p','ld-empty','No records match. Relax the stage or period filter.'));
+    tr0.append(td0); tb.append(tr0); return;
+  }
+
+  // Rows that need action first (Ledger pattern 5).
+  var scored = rows.map(function(r){
+    var st='neutral';
+    if (key==='pipeline'){
+      var d=Number(r.days_since_contact||0);
+      if (r.overall_status==='In Progress' && d>21) st='critical';
+      else if (r.overall_status==='In Progress' && d>14) st='watch';
+      else if (r.overall_status==='Lead Gone Cold') st='watch';
+    } else {
+      if (r.is_adverse || r.renewal_window==='Overdue') st='critical';
+      else if (r.is_paused) st='watch';
+    }
+    return { row:r, st:st };
+  });
+  var rank={critical:0,watch:1,neutral:2,ontrack:3};
+  scored.sort(function(a,b){ return rank[a.st]-rank[b.st]; });
+
+  // At most one red region: tint only the worst critical row.
+  var seenCritical=false;
+  scored.forEach(function(x){
+    if (x.st==='critical'){ if (seenCritical) x.st='watch'; else seenCritical=true; }
+  });
+  // Never tint more than a third of the rows.
+  var cap=Math.ceil(scored.length/3), tinted=0;
+
+  var htr=el('tr');
+  M.columns.forEach(function(c){
+    var h=el('th', c[2]==='money'||c[2]==='num' ? 'r' : '');
+    if (COLUMN_HELP[c[0]]) h.append(defineTerm(c[1], COLUMN_HELP[c[0]]));
+    else h.textContent = c[1];
+    htr.append(h);
+  });
+  var sh=el('th');
+  sh.append(defineTerm('Status',
+    'Whether this row needs attention, judged by the dashboard rather than typed in. '
+    + 'In the pipeline: a lead in progress untouched for over 21 days is critical, '
+    + 'over 14 days needs attention, and a gone-cold lead needs attention. In '
+    + 'accounts: at risk, churned or an overdue renewal is critical, and paused '
+    + 'needs attention. At most one row is marked critical, and at most a third of '
+    + 'rows are tinted, so the colour still means something.'));
+  htr.append(sh);
+  htr.append(el('th',null,''));
+  th.append(htr);
+
+  var admin=isAdmin(), me=myEmail();
+  scored.forEach(function(x){
+    var r=x.row, tr=el('tr');
+    if (x.st!=='neutral' && tinted<cap){ tr.className='row-'+x.st; tinted++; }
+    M.columns.forEach(function(c){
+      var k=c[0], kind=c[2], td=el('td');
+      var v=r[k];
+      if (kind==='money'){ td.className='r'; td.textContent=money(v); }
+      else if (kind==='num'){ td.className='r'; td.textContent=v==null?'—':num(v); }
+      else if (CHIPMAP[kind]){ if(v) td.append(chip(CHIPMAP[kind](v), v));
+                               else td.textContent='—'; }
+      else { var s=(v==null||v==='')?'—':String(v);
+             td.textContent = s.length>42 ? s.slice(0,40)+'…' : s;
+             if (s.length>42) td.title=s; }
+      tr.append(td);
+    });
+    var stTd=el('td'); stTd.append(chip(x.st==='neutral'?'neutral':x.st,
+      x.st==='critical'?'Critical':x.st==='watch'?'Needs attention':'No target'));
+    tr.append(stTd);
+
+    var can = admin || (r.sales_poc_email||'').toLowerCase()===me;
+    var act=el('td');
+    if (can){ var b=el('button','ld-btn sm','Edit'); b.type='button';
+      b.addEventListener('click', function(){ openForm(S.mod,r); }); act.append(b); }
+    else act.append(el('span','ld-caption','View only'));
+    tr.append(act);
+    tb.append(tr);
+  });
+}
+
+/* =================== add / edit =================== */
+$('addBtn').addEventListener('click', function(){ openForm(S.mod,null); });
+
+function openForm(key, existing){
+  var M=MODULES[key], editing=!!existing;
+  // The dashboard's row query returns fewer columns than the form has fields, so
+  // the record is re-read in full. Populating from the table row left the missing
+  // fields blank and the save then wrote those blanks back over good data.
+  var fetchFull = editing
+    ? api('record_get', { module:key, id:existing[M.pk] })
+        .then(function(r){ return r.record || existing; })
+        .catch(function(e){ apiFail('Opening the record', e); return existing; })
+    : Promise.resolve(null);
+
+  Promise.all([loadDims(key), fetchFull]).then(function(res){
+    var dims = res[0], record = res[1] || {};
+    openFormWith(key, M, editing, existing, record, dims);
+  });
+}
+
+function openFormWith(key, M, editing, existing, record, dims){
+  (function(dims){
+    var scrim=el('div','ld-scrim'), modal=el('div','ld-modal');
+    var head=el('div','ld-mhead');
+    head.append(el('p','ld-title',(editing?'Edit ':'Add ')
+      +(key==='pipeline'?'lead':'account')));
+    head.append(el('div','grow'));
+    var x=el('button','ld-btn sm','Close'); x.type='button'; head.append(x);
+
+    var form=el('form'); var body=el('div','ld-mbody'); var inputs={};
+    M.form.forEach(function(grp){
+      body.append(el('p','ld-grouphead',grp[0]));
+      var only1 = grp[1].length===1 && grp[1][0][2]==='textarea';
+      var g=el('div','ld-fieldgrid'+(only1?' full':''));
+      grp[1].forEach(function(fd){
+        var name=fd[0], label=fd[1], type=fd[2], req=fd[3];
+        var w=el('label','ld-fld'+(req?' req':''));
+        w.append(el('span',null,label));
+        var i;
+        if (type && type.indexOf('enum:')===0){
+          i=el('select'); i.append(new Option('—',''));
+          (S.lists[type.slice(5)]||[]).forEach(function(v){ i.append(new Option(v,v)); });
+        } else if (type && type.indexOf('dim:')===0){
+          i=el('input'); i.type='text';
+          var lid='dl_'+key+'_'+name, dl=document.getElementById(lid);
+          if(!dl){ dl=el('datalist'); dl.id=lid; document.body.append(dl); }
+          dl.textContent='';
+          (dims[type.slice(4)]||[]).forEach(function(v){ dl.append(new Option(v,v)); });
+          i.setAttribute('list',lid);
+        } else if (type==='textarea'){ i=el('textarea'); }
+        else { i=el('input');
+          i.type = type==='number'?'number' : type==='date'?'date'
+                 : type==='email'?'email' : 'text';
+          if (type==='number') i.step='any'; }
+        i.id='f_'+key+'_'+name;
+        if (req) i.required=true;
+        if (editing && record[name]!=null) i.value=record[name];
+        if (!editing && name==='sales_poc_email' && myEmail()) i.value=myEmail();
+        inputs[name]=i; w.append(i); g.append(w);
+      });
+      body.append(g);
+    });
+
+    // Fields the database fills. Shown so the record reads completely, disabled
+    // so they cannot be typed into, and deliberately kept out of `inputs` so the
+    // save can never include them.
+    if (M.systemFields){
+      body.append(el('p','ld-grouphead','Recorded by the system'));
+      var sg=el('div','ld-fieldgrid');
+      M.systemFields.forEach(function(fd){
+        var name=fd[0], label=fd[1], kind=fd[2];
+        var w=el('label','ld-fld'); w.append(el('span',null,label));
+        var i=el('input'); i.type='text'; i.disabled=true;
+        i.id='sys_'+key+'_'+name;
+        var raw = editing ? record[name] : null;
+        if (!editing){
+          i.value='';
+          i.placeholder = name==='created_at' || name==='updated_at' ? 'Set when saved'
+            : name==='owner' ? 'You, once saved'
+            : name==='data_source' ? 'manual'
+            : 'Assigned when saved';
+        } else if (raw == null || raw === ''){
+          i.value=''; i.placeholder='Not set';
+        } else if (kind==='ts:time'){
+          i.value = fmtTs(raw);
+        } else if (kind==='ts:owner'){
+          i.value = (String(raw) === String(S.session && S.session.user.id))
+            ? (S.session.user.email || 'You') + '  (you)'
+            : String(raw);
+        } else {
+          i.value = String(raw);
+        }
+        w.append(i); sg.append(w);
+      });
+      body.append(sg);
+      var sn=el('p','ld-caption');
+      sn.style.margin='calc(var(--space-5) * -1 + var(--space-2)) 0 var(--space-5)';
+      sn.textContent = 'These are written by the database and cannot be edited here. '
+        + '"Created by" is whoever first saved the record; it also decides who may '
+        + 'change it, alongside the seller POC email.';
+      body.append(sn);
+    }
+
+    if (inputs.solution_other)
+      inputs.solution_other.placeholder = 'Only needed when Solution offered is "Others"';
+
+    if (key==='pipeline' && inputs.current_stage && inputs.overall_status){
+      var hint=el('p','ld-caption');
+      hint.style.marginTop='calc(var(--space-5) * -1 + var(--space-2))';
+      body.append(hint);
+
+      // Engagement status offers only the values the chosen stage permits, so
+      // an invalid pairing cannot be selected rather than being rejected on save.
+      var engSel = inputs.overall_status;
+      function syncEngagement(keepValue){
+        var stage = inputs.current_stage.value;
+        var allowed = allowedEngagement(stage);
+        var prev = keepValue ? engSel.value : '';
+        engSel.textContent = '';
+        if (!stage){
+          engSel.append(new Option('Choose a lead stage first',''));
+          engSel.disabled = true;
+          hint.textContent = 'Engagement status depends on the lead stage, so pick the stage first.';
+          return;
+        }
+        engSel.disabled = false;
+        allowed.forEach(function(v){ engSel.append(new Option(v,v)); });
+        engSel.value = allowed.indexOf(prev) >= 0 ? prev : allowed[0];
+        hint.textContent = allowed.length === 1
+          ? 'At stage "'+stage+'" the engagement status can only be "'+allowed[0]+'".'
+          : 'At stage "'+stage+'" the engagement status may be '
+            + allowed.slice(0,-1).join(', ') + ' or ' + allowed[allowed.length-1] + '.';
+      }
+      inputs.current_stage.addEventListener('change', function(){ syncEngagement(true); });
+      syncEngagement(true);
+    }
+    form.append(body);
+
+    var foot=el('div','ld-mfoot');
+    var msg=el('p','ld-body-sm'); msg.style.cssText='margin:0 auto 0 0;align-self:center;color:var(--ink-200)';
+    var cancel=el('button','ld-btn','Cancel'); cancel.type='button';
+    var save=el('button','ld-btn primary', editing?'Save changes':'Add entry'); save.type='submit';
+    if (editing){
+      var del=el('button','ld-btn','Delete'); del.type='button';
+      del.addEventListener('click', function(){
+        del.disabled=true; del.textContent='Deleting…';
+        api('record_delete', { module:key, id:existing[M.pk] }).then(function(){
+          close(); S.dims[key]=null; S.totals[key]=null; refresh();
+        }).catch(function(e){
+          msg.textContent = e.message; del.disabled=false; del.textContent='Delete';
+        });
+      });
+      foot.append(del);
+    }
+    foot.append(msg,cancel,save);
+    form.append(foot);
+    modal.append(head,form); scrim.append(modal); $('modalHost').append(scrim);
+
+    function close(){ scrim.remove(); document.removeEventListener('keydown',onEsc); }
+    function onEsc(e){ if (e.key==='Escape') close(); }
+    document.addEventListener('keydown',onEsc);
+    x.addEventListener('click',close); cancel.addEventListener('click',close);
+    scrim.addEventListener('mousedown',function(e){ if (e.target===scrim) close(); });
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var payload={};
+      Object.keys(inputs).forEach(function(k){
+        var i=inputs[k], v=(i.value||'').trim();
+        var val = v==='' ? null : (i.type==='number' ? Number(v) : v);
+        if (!editing){ payload[k]=val; return; }
+        // Send only what actually changed, so a field this form does not know
+        // about can never be overwritten with a blank.
+        var was = record[k];
+        if (i.type==='number'){
+          var wasN = (was===null||was===undefined||was==='') ? null : Number(was);
+          if (wasN !== val) payload[k]=val;
+        } else {
+          var wasS = (was===null||was===undefined) ? null : String(was);
+          var nowS = val===null ? null : String(val);
+          if (wasS !== nowS) payload[k]=val;
+        }
+      });
+      // data_source is no longer sent: the backend sets it, and would discard
+      // it anyway, because the browser is not allowed to write system columns.
+      if (editing && Object.keys(payload).length===0){
+        msg.textContent='Nothing changed.';
+        setTimeout(close, 700);
+        return;
+      }
+      save.disabled=true; msg.textContent='Saving…';
+      api('record_save', { module:key, values:payload,
+                           id: editing ? existing[M.pk] : null })
+        .then(function(){
+          close(); S.dims[key]=null; S.totals[key]=null; refresh();
+        })
+        .catch(function(e){
+          save.disabled=false;
+          msg.textContent = /leads_stage_engagement_chk/.test(e.message||'')
+            ? 'That stage and engagement status cannot go together. Check the note above.'
+            : e.message;
+        });
+    });
+
+    setTimeout(function(){ var fi=modal.querySelector('input,select,textarea');
+      if (fi) fi.focus(); }, 40);
+  })(dims);
+}
+
+/* =================== upload =================== */
+$('upBtn').addEventListener('click', function(){ openUpload(S.mod); });
+
+function openUpload(key){
+  var M=MODULES[key];
+  var cols=[]; M.form.forEach(function(g){ g[1].forEach(function(f){ cols.push(f[0]); }); });
+  var scrim=el('div','ld-scrim'), modal=el('div','ld-modal');
+  var head=el('div','ld-mhead');
+  head.append(el('p','ld-title','Upload into '+M.title));
+  head.append(el('div','grow'));
+  var x=el('button','ld-btn sm','Close'); x.type='button'; head.append(x);
+
+  var body=el('div','ld-mbody');
+  var drop=el('div','ld-drop'); drop.tabIndex=0;
+  drop.append(el('p','ld-body','Drop a CSV or Excel file here, or select one'));
+  drop.append(el('p','ld-caption','CSV, XLSX or XLS · the first sheet is read'));
+  var file=el('input'); file.type='file'; file.accept='.csv,.tsv,.xlsx,.xls'; file.hidden=true;
+  var report=el('div');
+  var help=el('div','ld-note');
+  help.append(el('p','ld-title','Column headers must match these names'));
+  help.append(el('p','ld-body','Any column not on this list is ignored. Dropdown columns '
+    + 'must carry an exact allowed value, and rows that fail are reported, not imported.'));
+  var codeP=el('p','ld-caption'); codeP.style.marginTop='var(--space-2)';
+  codeP.textContent = cols.join(', ');
+  help.append(codeP);
+  body.append(drop,file,report,help);
+
+  var foot=el('div','ld-mfoot');
+  var msg=el('p','ld-body-sm'); msg.style.cssText='margin:0 auto 0 0;align-self:center;color:var(--ink-200)';
+  var done=el('button','ld-btn','Close'); done.type='button';
+  var commit=el('button','ld-btn primary','Import'); commit.type='button'; commit.disabled=true;
+  foot.append(msg,done,commit);
+  modal.append(head,body,foot); scrim.append(modal); $('modalHost').append(scrim);
+
+  function close(){ scrim.remove(); }
+  x.addEventListener('click',close); done.addEventListener('click',close);
+  scrim.addEventListener('mousedown',function(e){ if(e.target===scrim) close(); });
+  drop.addEventListener('click',function(){ file.click(); });
+  drop.addEventListener('keydown',function(e){
+    if (e.key==='Enter'||e.key===' '){ e.preventDefault(); file.click(); } });
+  ['dragenter','dragover'].forEach(function(ev){ drop.addEventListener(ev,function(e){
+    e.preventDefault(); drop.style.borderColor='var(--blue-600)'; }); });
+  ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev,function(e){
+    e.preventDefault(); drop.style.borderColor='var(--line-200)'; }); });
+  drop.addEventListener('drop',function(e){
+    var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(f) take(f); });
+  file.addEventListener('change',function(e){
+    var f=e.target.files&&e.target.files[0]; if(f) take(f); e.target.value=''; });
+
+  var staged=null;
+  function take(f){
+    report.textContent=''; commit.disabled=true; msg.textContent='Reading '+f.name+'…';
+    parseFile(f).then(function(raw){
+      if (!raw.length){ msg.textContent='That file has no data rows.'; return; }
+      var enumOf={}, req=[];
+      M.form.forEach(function(g){ g[1].forEach(function(fd){
+        if (fd[2] && fd[2].indexOf('enum:')===0) enumOf[fd[0]] = S.lists[fd[2].slice(5)]||[];
+        if (fd[3]) req.push(fd[0]); }); });
+
+      var good=[], bad=[];
+      raw.forEach(function(r,idx){
+        var out={}, errs=[];
+        Object.keys(r).forEach(function(h){
+          // Headers are matched to column names by name. Anything in brackets is
+          // dropped first, so a column exported as "Deal value (INR)" still maps
+          // to deal_value instead of being silently ignored.
+          var k=String(h||'').trim().toLowerCase()
+                  .replace(/\(.*?\)/g,'')
+                  .replace(/[^a-z0-9]+/g,'_')
+                  .replace(/^_+|_+$/g,'');
+          if (cols.indexOf(k)<0) return;
+          var v=r[h]; if (typeof v==='string') v=v.trim();
+          if (v===''||v==null) return;
+          if (enumOf[k] && enumOf[k].indexOf(v)<0){
+            errs.push(k+' holds "'+v+'", which is not an allowed value'); return; }
+          out[k]=v;
+        });
+        req.forEach(function(rq){ if(!out[rq]) errs.push(rq+' is required'); });
+        // Mirror the stage/engagement matrix so the error arrives before the insert.
+        if (key==='pipeline' && out.current_stage && out.overall_status){
+          var ok = allowedEngagement(out.current_stage);
+          if (ok.length && ok.indexOf(out.overall_status) < 0)
+            errs.push('engagement "'+out.overall_status+'" is not allowed at stage "'
+              + out.current_stage + '", which permits ' + ok.join(' or '));
+        }
+        // data_source and import_batch_id are set by the backend, not here.
+        if (errs.length) bad.push({row:idx+2, errs:errs});
+        else good.push(out);
+      });
+
+      staged=good; msg.textContent='';
+      var n=el('div','ld-note');
+      n.append(el('p','ld-title', num(good.length)+' rows ready'
+        + (bad.length ? ', '+num(bad.length)+' skipped' : '')));
+      if (bad.length){
+        bad.slice(0,6).forEach(function(b){
+          n.append(el('p','ld-body-sm','Row '+b.row+': '+b.errs.join('; '))); });
+        if (bad.length>6) n.append(el('p','ld-body-sm','and '+(bad.length-6)+' more.'));
+      } else n.append(el('p','ld-body','Every row passed validation.'));
+      report.append(n);
+      commit.disabled = good.length===0;
+    }).catch(function(err){
+      msg.textContent='That file could not be read: '+(err.message||err); });
+  }
+
+  commit.addEventListener('click', function(){
+    if (!staged || !staged.length) return;
+    commit.disabled=true;
+    // One call, one INSERT. The file lands whole or not at all, so a rejected
+    // row no longer leaves a half-imported file behind to work out and undo.
+    msg.textContent='Importing '+num(staged.length)+' rows…';
+    api('import_rows', { module:key, rows:staged }).then(function(r){
+      msg.textContent='Imported '+num(r.imported)+' rows.';
+      S.dims[key]=null; S.totals[key]=null; refresh();
+      setTimeout(close,900);
+    }).catch(function(e){
+      commit.disabled=false;
+      msg.textContent = 'Nothing was imported. ' + e.message;
+    });
+  });
+}
+
+function parseFile(f){
+  var nm=f.name.toLowerCase();
+  if (nm.slice(-4)==='.csv' || nm.slice(-4)==='.tsv'){
+    return new Promise(function(res,rej){
+      window.Papa.parse(f,{header:true,skipEmptyLines:'greedy',dynamicTyping:false,
+        complete:function(r){ res(r.data); }, error:rej});
+    });
+  }
+  return f.arrayBuffer().then(function(buf){
+    var wb=window.XLSX.read(buf,{type:'array'});
+    return window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],
+      {defval:'',raw:false});
+  });
+}
+
+/* =================== invite requests =================== */
+$('reqFilter').addEventListener('change', function(){ loadRequests(); });
+
+function loadRequests(){
+  var th=$('rTbl').querySelector('thead'), tb=$('rTbl').querySelector('tbody');
+  th.textContent=''; tb.textContent='';
+  var want = $('reqFilter').value;
+  api('list_requests',{status:want}).then(function(r){
+    var data = r.requests || [];
+    $('reqCap').textContent = data.length
+      ? num(data.length)+' '+(want==='All'?'in total':want.toLowerCase())
+      : 'none';
+    var htr=el('tr');
+    ['Email','Name','Reason','Requested','Status','Signed up','Decision']
+      .forEach(function(h){ htr.append(el('th',null,h)); });
+    th.append(htr);
+    if (!data.length){
+      var tr0=el('tr'), td0=el('td'); td0.colSpan=7;
+      td0.append(el('p','ld-empty', want==='Pending'
+        ? 'No requests are waiting for a decision.'
+        : 'Nothing to show for this filter.'));
+      tr0.append(td0); tb.append(tr0); return;
+    }
+    data.forEach(function(q){
+      var tr=el('tr');
+      if (q.status==='Pending') tr.className='row-watch';
+      tr.append(el('td',null,q.email||'—'));
+      tr.append(el('td',null,q.full_name||'—'));
+      var nt=el('td'); var s=q.note||'—';
+      nt.textContent = s.length>48 ? s.slice(0,46)+'…' : s;
+      if (s.length>48) nt.title=s;
+      tr.append(nt);
+      tr.append(el('td',null,(q.created_at||'').slice(0,10)));
+      var st=el('td');
+      st.append(chip(q.status==='Approved'?'ontrack'
+        : q.status==='Rejected'?'neutral':'watch',
+        q.status + (q.granted_role ? ' as '+q.granted_role : '')));
+      tr.append(st);
+      tr.append(el('td',null, q.has_signed_up ? 'Yes' : 'Not yet'));
+
+      var act=el('td');
+      if (q.status==='Pending'){
+        [['user','Approve as user'],['admin','Approve as admin']].forEach(function(o){
+          var b=el('button','ld-btn sm',o[1]); b.type='button';
+          b.style.marginRight='var(--space-1)';
+          b.addEventListener('click', function(){
+            decide(q, 'approve', o[0], b); });
+          act.append(b);
+        });
+        var rj=el('button','ld-btn sm danger','Reject'); rj.type='button';
+        rj.addEventListener('click', function(){ decide(q,'reject','user',rj); });
+        act.append(rj);
+      } else {
+        act.append(el('span','ld-caption',
+          q.decided_at ? 'Decided '+(q.decided_at||'').slice(0,10) : '—'));
+      }
+      tr.append(act); tb.append(tr);
+    });
+  }).catch(function(e){ apiFail('Reading the invite requests', e); });
+}
+
+/* Approving does two things that must happen together — record the decision
+   and send the invite — so it is one backend call. The backend holds the
+   service-role key the invite needs; this page never sees it. */
+function decide(q, decision, role, btn){
+  btn.disabled=true; btn.textContent='Saving…';
+  api('decide_request', { request_id:q.id, decision:decision, role:role })
+    .then(function(b){
+      $('errT').textContent = b.status==='Approved'
+        ? (b.email_sent ? 'Approved and invited' : 'Approved — no email went out')
+        : 'Request rejected';
+      $('errB').textContent = b.email + ' is now ' + String(b.status).toLowerCase()
+        + (b.granted_role ? ' as ' + b.granted_role : '') + '. ' + (b.email_note||'');
+      $('err').hidden = false;
+      loadRequests(); loadUsers();
+    })
+    .catch(function(e){
+      apiFail('The decision', e);
+      btn.disabled=false;
+      loadRequests();
+    });
+}
+
+/* =================== users =================== */
+function loadUsers(){
+  var th=$('uTbl').querySelector('thead'), tb=$('uTbl').querySelector('tbody');
+  th.textContent=''; tb.textContent='';
+  api('list_users',{}).then(function(r){
+    var data=r.users||[];
+    var admins=data.filter(function(u){ return u.role==='admin'; }).length;
+    $('usersHeadline').innerHTML = num(data.length)+' people have access, '
+      + mark(num(admins)+(admins===1?' as admin':' as admins'),'blue')+'.';
+    var htr=el('tr');
+    ['Email','Name','Role','Access','Joined','',''].forEach(function(h){
+      htr.append(el('th',null,h)); });
+    th.append(htr);
+    if (!data.length){
+      var tr0=el('tr'), td0=el('td'); td0.colSpan=7;
+      td0.append(el('p','ld-empty','No one has signed in yet.'));
+      tr0.append(td0); tb.append(tr0); return;
+    }
+    var blocked = 0;
+    data.forEach(function(u){
+      var isBlocked = (u.is_active === false) || u.is_banned === true;
+      if (isBlocked) blocked++;
+      var tr=el('tr');
+      if (isBlocked) tr.className='row-critical';
+      tr.append(el('td',null,u.email||'—'));
+      tr.append(el('td',null,u.full_name||'—'));
+      var rt=el('td'); rt.append(chip(u.role==='admin'?'ontrack':'neutral',
+        u.role==='admin'?'Admin':'User')); tr.append(rt);
+      var ac=el('td');
+      ac.append(chip(isBlocked?'critical':'ontrack', isBlocked?'Blocked':'Allowed'));
+      tr.append(ac);
+      tr.append(el('td',null,(u.created_at||'').slice(0,10)));
+
+      var isSelf = u.id === (S.session && S.session.user.id);
+      var roleTd=el('td'), blockTd=el('td');
+      if (isSelf){
+        roleTd.append(el('span','ld-caption','Your own account'));
+      } else {
+        var to = u.role==='admin' ? 'user' : 'admin';
+        var b=el('button','ld-btn sm', to==='admin'?'Make admin':'Make user');
+        b.type='button';
+        b.addEventListener('click', function(){
+          b.disabled=true; b.textContent='Saving…';
+          api('set_user_role',{user_id:u.id, role:to})
+            .catch(function(e){ apiFail('Changing the role', e); })
+            .then(function(){ loadUsers(); });
+        });
+        roleTd.append(b);
+
+        var bb=el('button','ld-btn sm'+(isBlocked?'':' danger'),
+          isBlocked ? 'Unblock' : 'Block');
+        bb.type='button';
+        bb.addEventListener('click', function(){
+          bb.disabled=true; bb.textContent='Saving…';
+          api('set_user_active',{user_id:u.id, active:isBlocked})
+            .catch(function(e){ apiFail('Changing the account', e); })
+            .then(function(){ loadUsers(); });
+        });
+        blockTd.append(bb);
+      }
+      tr.append(roleTd, blockTd); tb.append(tr);
+    });
+    if (blocked) $('usersHeadline').innerHTML = num(data.length)
+      + ' people have access, ' + mark(num(blocked)
+      + (blocked===1?' blocked':' blocked'),'red') + '.';
+  }).catch(function(e){ apiFail('Reading the user list', e); });
+}
+
+boot();
+</script>
+</body>
+</html>
